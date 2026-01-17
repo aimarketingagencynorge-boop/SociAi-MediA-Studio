@@ -197,31 +197,31 @@ const App: React.FC = () => {
     switch (currentView) {
       case View.LANDING:
         return (
-          <div className="flex flex-col items-center justify-center text-center space-y-8 py-20 px-4 min-h-[90vh]">
-            <div className="relative inline-block">
-                <div className="absolute -inset-4 bg-cyber-purple/20 blur-2xl rounded-full"></div>
-                <h1 className="text-4xl md:text-8xl font-futuristic font-black tracking-tighter leading-none relative text-white">
+          <div className="flex flex-col items-center justify-center text-center space-y-4 py-8 px-4 min-h-[80vh]">
+            <div className="relative inline-block mb-4">
+                <div className="absolute -inset-4 bg-cyber-purple/5 blur-3xl rounded-full"></div>
+                <h1 className="text-3xl md:text-5xl font-futuristic font-black tracking-tighter leading-none relative text-white uppercase">
                     SociAI MediA<br/> 
                     <span className="bg-gradient-to-r from-cyber-turquoise via-cyber-magenta to-cyber-purple bg-clip-text text-transparent">STUDIO</span>
                 </h1>
             </div>
-            <p className="text-lg md:text-2xl text-gray-400 max-w-2xl mx-auto">{t.heroSubtitle}</p>
-            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto px-6">
-              <button onClick={() => setCurrentView(View.ONBOARDING)} className="w-full md:w-auto px-10 py-5 bg-cyber-purple text-white font-black text-xl rounded-full hover:scale-105 transition shadow-2xl shadow-cyber-purple/40 uppercase tracking-widest">
+            <p className="text-sm md:text-lg text-gray-400 max-w-lg mx-auto leading-relaxed">{t.heroSubtitle}</p>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto px-6 pt-4">
+              <button onClick={() => setCurrentView(View.ONBOARDING)} className="w-full sm:w-auto px-6 py-3 bg-cyber-purple text-white font-black text-base rounded-full hover:scale-105 transition shadow-lg shadow-cyber-purple/20 uppercase tracking-widest">
                 {t.getStarted}
               </button>
               <button 
                 onClick={() => setCurrentView(View.AUTH)} 
-                className="w-full md:w-auto px-10 py-5 border-2 border-cyber-turquoise/40 hover:border-cyber-turquoise text-cyber-turquoise font-black text-xl rounded-full transition uppercase tracking-widest flex items-center justify-center gap-3"
+                className="w-full sm:w-auto px-6 py-3 border border-cyber-turquoise/20 hover:border-cyber-turquoise text-cyber-turquoise font-black text-base rounded-full transition uppercase tracking-widest flex items-center justify-center gap-2 bg-cyber-turquoise/5"
               >
-                <LogIn size={20} /> {t.login}
+                <LogIn size={16} /> {t.login}
               </button>
             </div>
-            <div className="mt-20 text-center space-y-4">
-              <p className="text-3xl md:text-5xl font-futuristic font-bold uppercase tracking-[0.4em] may-the-ai text-cyber-turquoise drop-shadow-[0_0_25px_rgba(52,224,247,0.6)]">
+            <div className="mt-12 text-center space-y-2">
+              <p className="text-lg md:text-2xl font-futuristic font-bold uppercase tracking-[0.3em] may-the-ai text-white">
                 May the AI be with You+
               </p>
-              <p className="text-[10px] text-gray-700 uppercase font-black tracking-[0.6em] opacity-50">usetheforce.ai</p>
+              <p className="text-[8px] text-gray-600 uppercase font-black tracking-[0.4em] opacity-30">usetheforce.ai</p>
             </div>
           </div>
         );

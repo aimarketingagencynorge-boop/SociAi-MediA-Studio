@@ -34,8 +34,8 @@
             },
             keyframes: {
               glow: {
-                'from': { 'text-shadow': '0 0 5px #34E0F7, 0 0 10px #34E0F7' },
-                'to': { 'text-shadow': '0 0 20px #8C4DFF, 0 0 30px #8C4DFF' }
+                '0%': { 'text-shadow': '0 0 2px #fff, 0 0 4px #fff, 0 0 11px #34E0F7, 0 0 19px #34E0F7, 0 0 40px #34E0F7' },
+                '100%': { 'text-shadow': '0 0 2px #fff, 0 0 4px #fff, 0 0 11px #8C4DFF, 0 0 19px #8C4DFF, 0 0 40px #8C4DFF' }
               },
               slideUp: {
                 'from': { transform: 'translateY(100%)' },
@@ -80,7 +80,7 @@
         background: #8C4DFF;
       }
       .may-the-ai {
-        animation: glow 3s ease-in-out infinite alternate;
+        animation: glow 2s ease-in-out infinite alternate;
       }
     </style>
   <script type="importmap">
