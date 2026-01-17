@@ -1,11 +1,11 @@
 {
   "name": "sociai-media-studio",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npx vite build",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
