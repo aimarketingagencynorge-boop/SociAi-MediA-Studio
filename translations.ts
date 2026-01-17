@@ -3,19 +3,19 @@ export type Language = 'pl' | 'en';
 export const translations = {
   pl: {
     heroTitle: "SociAI MediA Studio",
-    heroSubtitle: "Twój AI Social Media Manager 24/7. System operacyjny aktywny.",
+    heroSubtitle: "Twój AI Social Media Manager 24/7. System gotowy do pracy.",
     getStarted: "ROZPOCZNIJ PRACĘ",
     watchDemo: "EKSPLORUJ FUNKCJE",
     navDashboard: "Panel Główny",
-    navPlanner: "Archiwum Treści",
+    navPlanner: "Kalendarz Treści",
     navCrm: "Centrum Klientów",
     navAcademy: "Akademia Wiedzy",
     navPricing: "Pakiety Dostępu",
     navDockingBay: "Integracje",
     navSettings: "Ustawienia Systemu",
     activeBrand: "Aktywna marka",
-    engineering: "SYNCHRONIZACJA SYSTEMU",
-    connecting: "Łączenie z siecią SociAI...",
+    engineering: "PRZYGOTOWYWANIE STUDIA",
+    connecting: "Łączenie z usługami SociAI...",
     commandCenter: "CENTRUM DOWODZENIA",
     aiInsights: "Analizy oparte na sztucznej inteligencji",
     genReport: "GENERUJ RAPORT",
@@ -26,8 +26,8 @@ export const translations = {
     growthTitle: "Wzrost w czasie",
     engagementTitle: "Zaangażowanie wg dni",
     aiRecs: "Rekomendacje Strategiczne",
-    plannerTitle: "KALENDARZ PUBLIKACJI",
-    plannerSubtitle: "Zarządzaj strategią i harmonogramem w jednym miejscu.",
+    plannerTitle: "HARMONOGRAM PUBLIKACJI",
+    plannerSubtitle: "Zarządzaj strategią i planuj treści w jednym miejscu.",
     topicPlaceholder: "O czym ma być post?",
     aiQuickDraft: "SZYBKI PROJEKT AI",
     genWorking: "GENEROWANIE TREŚCI...",
@@ -92,7 +92,7 @@ export const translations = {
     notificationSystem: "System",
     scanTrends: "ANALIZUJ TRENDY",
     scanningTrends: "POBIERANIE DANYCH...",
-    credits: "Punkty Energii",
+    credits: "Kredyty",
     genImage: "GENERUJ GRAFIKĘ (AI)",
     genVideo: "GENERUJ WIDEO (Veo)",
     costInfo: "Operacja zużyje {count} pkt",
@@ -141,9 +141,9 @@ export const translations = {
     assetProfile: "Profil osobisty",
     activeChannel: "Kanał aktywny",
     simulationMode: "STATUS POŁĄCZENIA",
-    simulationDesc: "Wszystkie integracje są monitorowane i szyfrowane end-to-end.",
+    simulationDesc: "Wszystkie integracje są monitorowane i w pełni bezpieczne.",
     welcomeGiftTitle: "BONUS POWITALNY!",
-    welcomeGiftDesc: "Otrzymałeś 500 punktów na start, aby w pełni przetestować nasze funkcje!",
+    welcomeGiftDesc: "Otrzymałeś 500 kredytów na start, aby przetestować nasze funkcje!",
     settingsTitle: "USTAWIENIA",
     brandIdentity: "Tożsamość Wizualna",
     signatureSettings: "Konfiguracja Podpisów",
@@ -166,9 +166,9 @@ export const translations = {
     syncCloud: "SYNC CHMURA",
     redirectingStripe: "LOGOWANIE DO PŁATNOŚCI...",
     features: {
-      starter: ["100 Punktów Energii", "1 Wybrana Platforma", "Analityka Podstawowa"],
-      pro: ["1000 Punktów Energii", "Wszystkie Platformy", "Generowanie Wideo (Veo)", "Bot Analizujący Trends"],
-      agency: ["5000 Punktów Energii", "Obsługa wielu marek", "Priorytetowe Renderowanie", "Dedykowany Opiekun"]
+      starter: ["100 Kredytów", "1 Wybrana Platforma", "Analityka Podstawowa"],
+      pro: ["1000 Kredytów", "Wszystkie Platformy", "Generowanie Wideo (Veo)", "Analiza Trendów"],
+      agency: ["5000 Kredytów", "Obsługa wielu marek", "Priorytetowe Renderowanie", "Dedykowany Opiekun"]
     }
   },
   en: {
@@ -184,8 +184,8 @@ export const translations = {
     navDockingBay: "Integrations",
     navSettings: "System Settings",
     activeBrand: "Active Brand",
-    engineering: "SYSTEM SYNCHRONIZATION",
-    connecting: "Connecting to SociAI network...",
+    engineering: "PREPARING STUDIO",
+    connecting: "Connecting to SociAI services...",
     commandCenter: "COMMAND CENTER",
     aiInsights: "AI-driven analytics",
     genReport: "GENERATE REPORT",
@@ -262,7 +262,7 @@ export const translations = {
     notificationSystem: "System",
     scanTrends: "ANALYZE TRENDS",
     scanningTrends: "FETCHING DATA...",
-    credits: "Energy Points",
+    credits: "Credits",
     genImage: "GENERATE IMAGE (AI)",
     genVideo: "GENERATE VIDEO (Veo)",
     costInfo: "Will use {count} pts",
@@ -311,9 +311,9 @@ export const translations = {
     assetProfile: "Personal Profile",
     activeChannel: "Active channel",
     simulationMode: "CONNECTION STATUS",
-    simulationDesc: "All integrations are secured with end-to-end encryption protocols.",
+    simulationDesc: "All integrations are secure and monitored.",
     welcomeGiftTitle: "WELCOME BONUS!",
-    welcomeGiftDesc: "You've received 500 points to start exploring our features!",
+    welcomeGiftDesc: "You've received 500 credits to start exploring our features!",
     settingsTitle: "SETTINGS",
     brandIdentity: "Visual Identity",
     signatureSettings: "Signature Setup",
@@ -336,9 +336,9 @@ export const translations = {
     syncCloud: "CLOUD SYNC",
     redirectingStripe: "LOGGING TO PAYMENT...",
     features: {
-      starter: ["100 Energy Points", "1 Selected Platform", "Basic Analytics"],
-      pro: ["1000 Energy Points", "All Platforms", "Video Generation (Veo)", "Trend Analysis Bot"],
-      agency: ["5000 Energy Points", "Multi-brand support", "Priority Rendering", "Dedicated Manager"]
+      starter: ["100 Credits", "1 Selected Platform", "Basic Analytics"],
+      pro: ["1000 Credits", "All Platforms", "Video Generation (Veo)", "Trend Analysis"],
+      agency: ["5000 Credits", "Multi-brand support", "Priority Rendering", "Dedicated Manager"]
     }
   }
 };

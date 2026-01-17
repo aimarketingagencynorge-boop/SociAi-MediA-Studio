@@ -200,7 +200,7 @@ const App: React.FC = () => {
           <div className="flex flex-col items-center justify-center text-center space-y-8 py-20 px-4 min-h-[90vh]">
             <div className="relative inline-block">
                 <div className="absolute -inset-4 bg-cyber-purple/20 blur-2xl rounded-full"></div>
-                <h1 className="text-4xl md:text-8xl font-futuristic font-black tracking-tighter leading-none relative">
+                <h1 className="text-4xl md:text-8xl font-futuristic font-black tracking-tighter leading-none relative text-white">
                     SociAI MediA<br/> 
                     <span className="bg-gradient-to-r from-cyber-turquoise via-cyber-magenta to-cyber-purple bg-clip-text text-transparent">STUDIO</span>
                 </h1>
@@ -217,7 +217,7 @@ const App: React.FC = () => {
                 <LogIn size={20} /> {t.login}
               </button>
             </div>
-            <p className="text-[10px] text-gray-600 uppercase font-black tracking-[0.3em] mt-12">System fully operational • usetheforce.ai</p>
+            <p className="text-[10px] text-gray-600 uppercase font-black tracking-[0.3em] mt-12">SociAI MediA Studio • usetheforce.ai</p>
           </div>
         );
       case View.AUTH:
@@ -366,7 +366,6 @@ const App: React.FC = () => {
                     ) : (
                         <CloudCheck size={14} className="text-green-400" />
                     )}
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest hidden md:inline">Neural Link Active</span>
                  </div>
              )}
 

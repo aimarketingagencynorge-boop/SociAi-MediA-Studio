@@ -208,20 +208,20 @@ export const DockingBay: React.FC<DockingBayProps> = ({ lang }) => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        <NeonCard title="Bezpieczeństwo Połączenia" icon={<ShieldCheck size={18} />}>
+        <NeonCard title="Bezpieczeństwo" icon={<ShieldCheck size={18} />}>
            <div className="space-y-4">
               <div className="flex items-start gap-3 bg-white/5 p-4 rounded-xl border border-white/10">
                  <Globe className="text-cyber-turquoise mt-1 shrink-0" size={16} />
                  <div>
-                    <p className="text-xs font-bold text-white uppercase tracking-wider mb-1">Szyfrowanie 256-bit</p>
-                    <p className="text-[10px] text-gray-500 leading-relaxed">Wszystkie dane wysyłane do platform są szyfrowane end-to-end.</p>
+                    <p className="text-xs font-bold text-white uppercase tracking-wider mb-1">Szyfrowanie End-to-End</p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">Twoje tokeny dostępu są przechowywane w izolowanym kontenerze kryptograficznym.</p>
                  </div>
               </div>
               <div className="flex items-start gap-3 bg-white/5 p-4 rounded-xl border border-white/10">
                  <UserCheck className="text-green-400 mt-1 shrink-0" size={16} />
                  <div>
-                    <p className="text-xs font-bold text-white uppercase tracking-wider mb-1">Autoryzacja OAuth 2.0</p>
-                    <p className="text-[10px] text-gray-500 leading-relaxed">System nie przechowuje Twoich haseł, korzystamy z oficjalnych protokołów dostępu.</p>
+                    <p className="text-xs font-bold text-white uppercase tracking-wider mb-1">Dostęp Autoryzowany</p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">Każda akcja publikacji wymaga aktywnej sesji administratora studia.</p>
                  </div>
               </div>
            </div>
@@ -235,7 +235,7 @@ export const DockingBay: React.FC<DockingBayProps> = ({ lang }) => {
               </div>
               <div className="flex gap-4 items-center">
                  <span className="text-cyber-turquoise">2025-05-12 09:15:22</span>
-                 <span className="text-white">ENCRYPTION: Secure Tunnel Active.</span>
+                 <span className="text-white">SECURE: Tunnel Active.</span>
               </div>
            </div>
         </NeonCard>
