@@ -218,7 +218,7 @@ const App: React.FC = () => {
               </button>
             </div>
             <div className="mt-20 text-center space-y-4">
-              <p className="text-2xl md:text-4xl font-futuristic font-bold uppercase tracking-[0.4em] may-the-ai text-cyber-turquoise drop-shadow-[0_0_15px_rgba(52,224,247,0.5)]">
+              <p className="text-3xl md:text-5xl font-futuristic font-bold uppercase tracking-[0.4em] may-the-ai text-cyber-turquoise drop-shadow-[0_0_25px_rgba(52,224,247,0.6)]">
                 May the AI be with You+
               </p>
               <p className="text-[10px] text-gray-700 uppercase font-black tracking-[0.6em] opacity-50">usetheforce.ai</p>
