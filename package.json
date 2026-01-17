@@ -3,11 +3,26 @@
   "name": "sociai-media-studio",
   "version": "1.0.0",
   "private": true,
-  "description": "SociAI MediA Studio - Twoje AI Social Media Manager",
+  "type": "module",
   "scripts": {
-    "start": "serve ."
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "serve": "^14.2.3"
+    "@google/genai": "^1.37.0",
+    "lucide-react": "^0.562.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3"
   }
 }
