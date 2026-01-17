@@ -1,6 +1,5 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -11,7 +10,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script>
-      // Konfiguracja Tailwind dla CDN
       window.tailwind.config = {
         theme: {
           extend: {
@@ -53,17 +51,15 @@
         background-color: #0A0A12;
         color: #FFFFFF;
         overflow-x: hidden;
-        -webkit-tap-highlight-color: transparent;
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+      }
+      #root {
+        min-height: 100vh;
       }
       .neon-border {
         border: 1px solid rgba(140, 77, 255, 0.4);
         box-shadow: 0 0 15px rgba(140, 77, 255, 0.1);
-      }
-      .neon-text-purple {
-        text-shadow: 0 0 10px #8C4DFF;
-      }
-      .neon-text-cyan {
-        text-shadow: 0 0 10px #34E0F7;
       }
       .glass-card {
         background: rgba(21, 21, 37, 0.7);
@@ -82,11 +78,6 @@
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #8C4DFF;
-      }
-      @media (max-width: 768px) {
-        ::-webkit-scrollbar {
-          display: none;
-        }
       }
     </style>
   <script type="importmap">

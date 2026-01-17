@@ -1,109 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#8C4DFF" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2103/2103633.png" />
-    <title>SociAI MediA Studio</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <script>
-      window.tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              cyber: {
-                purple: '#8C4DFF',
-                turquoise: '#34E0F7',
-                magenta: '#C74CFF',
-                dark: '#0A0A12',
-                card: '#151525',
-                border: 'rgba(140, 77, 255, 0.3)'
-              }
-            },
-            fontFamily: {
-              sans: ['Poppins', 'sans-serif'],
-              futuristic: ['Space Grotesk', 'sans-serif']
-            },
-            animation: {
-              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-              'glow': 'glow 2s ease-in-out infinite alternate',
-              'slide-up': 'slideUp 0.3s ease-out'
-            },
-            keyframes: {
-              glow: {
-                'from': { 'box-shadow': '0 0 5px #8C4DFF, 0 0 10px #8C4DFF' },
-                'to': { 'box-shadow': '0 0 20px #34E0F7, 0 0 30px #34E0F7' }
-              },
-              slideUp: {
-                'from': { transform: 'translateY(100%)' },
-                'to': { transform: 'translateY(0)' }
-              }
-            }
-          }
-        }
-      }
-    </script>
-    <style>
-      body {
-        background-color: #0A0A12;
-        color: #FFFFFF;
-        overflow-x: hidden;
-        -webkit-tap-highlight-color: transparent;
-      }
-      .neon-border {
-        border: 1px solid rgba(140, 77, 255, 0.4);
-        box-shadow: 0 0 15px rgba(140, 77, 255, 0.1);
-      }
-      .neon-text-purple {
-        text-shadow: 0 0 10px #8C4DFF;
-      }
-      .neon-text-cyan {
-        text-shadow: 0 0 10px #34E0F7;
-      }
-      .glass-card {
-        background: rgba(21, 21, 37, 0.7);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-      }
-      ::-webkit-scrollbar {
-        width: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #0A0A12;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #8C4DFF;
-      }
-      @media (max-width: 768px) {
-        ::-webkit-scrollbar {
-          display: none;
-        }
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
-    "recharts": "https://esm.sh/recharts@^3.6.0",
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
-  }
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
 }
-</script>
-</head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
-  </body>
-</html>
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
