@@ -217,11 +217,11 @@ const App: React.FC = () => {
                 <LogIn size={20} /> {t.login}
               </button>
             </div>
-            <div className="mt-16 text-center space-y-2">
-              <p className="text-sm md:text-lg text-cyber-turquoise/80 font-futuristic font-bold uppercase tracking-[0.5em] animate-pulse">
+            <div className="mt-20 text-center space-y-4">
+              <p className="text-xl md:text-3xl font-futuristic font-bold uppercase tracking-[0.4em] may-the-ai text-cyber-turquoise">
                 May the AI be with You+
               </p>
-              <p className="text-[10px] text-gray-700 uppercase font-black tracking-[0.3em]">usetheforce.ai</p>
+              <p className="text-[10px] text-gray-700 uppercase font-black tracking-[0.6em] opacity-50">usetheforce.ai</p>
             </div>
           </div>
         );

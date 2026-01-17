@@ -34,8 +34,8 @@
             },
             keyframes: {
               glow: {
-                'from': { 'box-shadow': '0 0 5px #8C4DFF, 0 0 10px #8C4DFF' },
-                'to': { 'box-shadow': '0 0 20px #34E0F7, 0 0 30px #34E0F7' }
+                'from': { 'text-shadow': '0 0 5px #34E0F7, 0 0 10px #34E0F7' },
+                'to': { 'text-shadow': '0 0 20px #8C4DFF, 0 0 30px #8C4DFF' }
               },
               slideUp: {
                 'from': { transform: 'translateY(100%)' },
@@ -78,6 +78,9 @@
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #8C4DFF;
+      }
+      .may-the-ai {
+        animation: glow 3s ease-in-out infinite alternate;
       }
     </style>
   <script type="importmap">
