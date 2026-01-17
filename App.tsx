@@ -217,7 +217,7 @@ const App: React.FC = () => {
                 <LogIn size={20} /> {t.login}
               </button>
             </div>
-            <p className="text-[10px] text-gray-600 uppercase font-black tracking-[0.3em] mt-12">SociAI MediA Studio • usetheforce.ai</p>
+            <p className="text-[10px] text-gray-600 uppercase font-black tracking-[0.3em] mt-12">May the AI be with you. usetheforce.ai</p>
           </div>
         );
       case View.AUTH:
