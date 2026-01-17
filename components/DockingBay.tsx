@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { NeonCard } from './NeonCard';
 import { translations, Language } from '../translations';
@@ -15,8 +14,7 @@ import {
   ChevronRight,
   Globe,
   UserCheck,
-  Info,
-  X // Added missing import
+  X
 } from 'lucide-react';
 
 interface DockingBayProps {
@@ -25,18 +23,18 @@ interface DockingBayProps {
 
 const MOCK_ASSETS: Record<string, SocialAsset[]> = {
     fb: [
-        { id: '1', externalId: 'p1', name: 'Brand Page Official', type: 'page', thumbnail: 'https://picsum.photos/40/40?random=1' },
+        { id: '1', externalId: 'p1', name: 'Official Brand Page', type: 'page', thumbnail: 'https://picsum.photos/40/40?random=1' },
         { id: '2', externalId: 'p2', name: 'Product Ventures', type: 'page', thumbnail: 'https://picsum.photos/40/40?random=2' }
     ],
     ig: [
-        { id: '3', externalId: 'i1', name: 'instagram_official', type: 'business_account', thumbnail: 'https://picsum.photos/40/40?random=3' }
+        { id: '3', externalId: 'i1', name: 'brand_official_ig', type: 'business_account', thumbnail: 'https://picsum.photos/40/40?random=3' }
     ],
     li: [
-        { id: '4', externalId: 'l1', name: 'Corporation Inc.', type: 'company', thumbnail: 'https://picsum.photos/40/40?random=4' },
-        { id: '5', externalId: 'l2', name: 'Personal Profile (CEO)', type: 'profile', thumbnail: 'https://picsum.photos/40/40?random=5' }
+        { id: '4', externalId: 'l1', name: 'Global Corp Inc.', type: 'company', thumbnail: 'https://picsum.photos/40/40?random=4' },
+        { id: '5', externalId: 'l2', name: 'CEO Personal Profile', type: 'profile', thumbnail: 'https://picsum.photos/40/40?random=5' }
     ],
     tk: [
-        { id: '6', externalId: 't1', name: '@trends_official', type: 'creator_account', thumbnail: 'https://picsum.photos/40/40?random=6' }
+        { id: '6', externalId: 't1', name: '@brand_trends', type: 'creator_account', thumbnail: 'https://picsum.photos/40/40?random=6' }
     ]
 };
 
@@ -84,7 +82,7 @@ export const DockingBay: React.FC<DockingBayProps> = ({ lang }) => {
   };
 
   const handleDisconnect = (id: string) => {
-    if (confirm("Disconnect this transmission link?")) {
+    if (confirm("Odłączyć to połączenie?")) {
       setPlatforms(prev => prev.map(plat => 
         plat.id === id ? { ...plat, connected: false, status: 'none' as const, selectedAssetId: undefined, assets: [] } : plat
       ));
@@ -104,7 +102,7 @@ export const DockingBay: React.FC<DockingBayProps> = ({ lang }) => {
         <div>
           <h1 className="text-3xl font-futuristic font-bold neon-text-purple uppercase tracking-widest">{t.dockTitle}</h1>
           <p className="text-gray-400 text-sm mt-1 flex items-center gap-2">
-            <ShieldCheck size={14} className="text-cyber-turquoise" /> {t.dockSubtitle}
+            <ShieldCheck size={14} className="text-cyber-turquoise" /> Zarządzaj bezpiecznymi kanałami komunikacji.
           </p>
         </div>
       </div>
@@ -138,7 +136,7 @@ export const DockingBay: React.FC<DockingBayProps> = ({ lang }) => {
                     <div className="w-full p-3 bg-white/5 rounded-xl border border-white/10 flex items-center gap-3">
                         <img src={selectedAsset.thumbnail} className="w-8 h-8 rounded-lg" alt="" />
                         <div className="text-left overflow-hidden">
-                            <p className="text-[10px] text-cyber-turquoise font-black uppercase leading-none mb-1">{t.activeChannel}</p>
+                            <p className="text-[10px] text-cyber-turquoise font-black uppercase leading-none mb-1">Aktywny Kanał</p>
                             <p className="text-[11px] text-white font-bold truncate">{selectedAsset.name}</p>
                         </div>
                     </div>
@@ -157,13 +155,13 @@ export const DockingBay: React.FC<DockingBayProps> = ({ lang }) => {
                         onClick={() => setSelectingAssetFor(plat.id)}
                         className="w-full py-2 bg-white/5 border border-white/10 text-gray-400 hover:text-white rounded-lg text-[10px] font-bold uppercase transition"
                     >
-                        {t.selectAsset}
+                        Zmień Kanał
                     </button>
                     <button 
                         onClick={() => handleDisconnect(plat.id)}
                         className="w-full py-3 text-red-400 hover:bg-red-500/10 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                     >
-                        <Unlink size={14} /> {t.dockDisconnect}
+                        <Unlink size={14} /> Rozłącz
                     </button>
                   </div>
                 ) : (
@@ -171,7 +169,7 @@ export const DockingBay: React.FC<DockingBayProps> = ({ lang }) => {
                     onClick={() => handleDock(plat.id)}
                     className="w-full py-3 bg-cyber-purple/20 border border-cyber-purple/30 text-cyber-purple hover:bg-cyber-purple hover:text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                   >
-                    <LinkIcon size={14} /> {t.dockConnect}
+                    <LinkIcon size={14} /> Połącz
                   </button>
                 )}
               </div>
@@ -184,7 +182,7 @@ export const DockingBay: React.FC<DockingBayProps> = ({ lang }) => {
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-cyber-dark/80 backdrop-blur-md animate-fadeIn">
               <div className="w-full max-w-lg glass-card border border-cyber-purple/30 rounded-3xl overflow-hidden shadow-2xl">
                   <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-                      <h2 className="text-xl font-futuristic font-bold text-white uppercase tracking-widest">{t.selectAsset}</h2>
+                      <h2 className="text-xl font-futuristic font-bold text-white uppercase tracking-widest">Wybierz Kanał</h2>
                       <button onClick={() => setSelectingAssetFor(null)} className="text-gray-500 hover:text-white"><X size={24}/></button>
                   </div>
                   <div className="p-6 space-y-4">
@@ -210,34 +208,34 @@ export const DockingBay: React.FC<DockingBayProps> = ({ lang }) => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        <NeonCard title="Status Systemu" icon={<RefreshCw size={18} />}>
-           <div className="space-y-4 font-mono text-[10px] text-gray-500">
-              <div className="flex gap-4 items-center">
-                 <span className="text-cyber-turquoise">2025-05-12 11:30:10</span>
-                 <span className="text-white">API_SYNC: Channels optimized.</span>
-              </div>
-              <div className="flex gap-4 items-center">
-                 <span className="text-cyber-turquoise">2025-05-12 09:15:22</span>
-                 <span className="text-white">LINK_ACTIVE: Social Graph Connection Stable.</span>
-              </div>
-           </div>
-        </NeonCard>
-
-        <NeonCard title="Bezpieczeństwo" icon={<ShieldCheck size={18} />}>
+        <NeonCard title="Bezpieczeństwo Połączenia" icon={<ShieldCheck size={18} />}>
            <div className="space-y-4">
               <div className="flex items-start gap-3 bg-white/5 p-4 rounded-xl border border-white/10">
                  <Globe className="text-cyber-turquoise mt-1 shrink-0" size={16} />
                  <div>
-                    <p className="text-xs font-bold text-white uppercase tracking-wider mb-1">Szyfrowanie End-to-End</p>
-                    <p className="text-[10px] text-gray-500 leading-relaxed">Twoje tokeny dostępu są przechowywane w izolowanym kontenerze kryptograficznym.</p>
+                    <p className="text-xs font-bold text-white uppercase tracking-wider mb-1">Szyfrowanie 256-bit</p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">Wszystkie dane wysyłane do platform są szyfrowane end-to-end.</p>
                  </div>
               </div>
               <div className="flex items-start gap-3 bg-white/5 p-4 rounded-xl border border-white/10">
                  <UserCheck className="text-green-400 mt-1 shrink-0" size={16} />
                  <div>
-                    <p className="text-xs font-bold text-white uppercase tracking-wider mb-1">Dostęp Autoryzowany</p>
-                    <p className="text-[10px] text-gray-500 leading-relaxed">Każda akcja publikacji wymaga aktywnej sesji administratora studia.</p>
+                    <p className="text-xs font-bold text-white uppercase tracking-wider mb-1">Autoryzacja OAuth 2.0</p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">System nie przechowuje Twoich haseł, korzystamy z oficjalnych protokołów dostępu.</p>
                  </div>
+              </div>
+           </div>
+        </NeonCard>
+        
+        <NeonCard title="Monitor Przesyłu" icon={<RefreshCw size={18} />}>
+           <div className="space-y-4 font-mono text-[10px] text-gray-500">
+              <div className="flex gap-4 items-center">
+                 <span className="text-cyber-turquoise">2025-05-12 11:30:10</span>
+                 <span className="text-white">API_SYNC: Channels ready.</span>
+              </div>
+              <div className="flex gap-4 items-center">
+                 <span className="text-cyber-turquoise">2025-05-12 09:15:22</span>
+                 <span className="text-white">ENCRYPTION: Secure Tunnel Active.</span>
               </div>
            </div>
         </NeonCard>

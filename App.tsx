@@ -23,14 +23,9 @@ import {
   Cpu,
   Crown,
   Activity,
-  RefreshCcw,
-  Plus,
-  Flame,
-  Rocket,
-  LogIn,
-  Infinity,
   CloudCheck,
-  CloudUpload
+  CloudUpload,
+  LogIn
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -155,13 +150,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleReset = () => {
-    if (confirm("Czy na pewno chcesz zresetować studio? Wszystkie dane zostaną usunięte.")) {
-      localStorage.clear();
-      window.location.reload();
-    }
-  };
-
   const markNotificationRead = (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
@@ -200,7 +188,7 @@ const App: React.FC = () => {
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
           <div className="w-16 h-16 border-4 border-cyber-purple border-t-transparent rounded-full animate-spin mb-6"></div>
-          <h2 className="text-2xl font-futuristic font-bold neon-text-purple uppercase">{t.engineering}</h2>
+          <h2 className="text-2xl font-futuristic font-bold neon-text-purple uppercase tracking-widest">{t.engineering}</h2>
           <p className="text-gray-400 mt-2">{t.connecting}</p>
         </div>
       );
@@ -229,7 +217,7 @@ const App: React.FC = () => {
                 <LogIn size={20} /> {t.login}
               </button>
             </div>
-            <p className="text-[10px] text-gray-600 uppercase font-bold tracking-[0.3em] mt-12">Powered by usetheforce.ai & Gemini</p>
+            <p className="text-[10px] text-gray-600 uppercase font-black tracking-[0.3em] mt-12">System fully operational • usetheforce.ai</p>
           </div>
         );
       case View.AUTH:
@@ -268,11 +256,6 @@ const App: React.FC = () => {
           { key: 'starter', label: t.starter, price: '29', credits: 100, features: t.features.starter, icon: <Activity size={24} className="text-gray-400" /> },
           { key: 'pro', label: t.pro, price: '89', credits: 1000, features: t.features.pro, icon: <Cpu size={24} className="text-cyber-purple" />, highlight: true },
           { key: 'agency', label: t.agency, price: '299', credits: 5000, features: t.features.agency, icon: <Crown size={24} className="text-cyber-turquoise" /> },
-        ];
-        const boostPacks = [
-          { key: 'mini', label: t.packSmall, price: '9', credits: 150, icon: <Flame size={20} className="text-orange-400" /> },
-          { key: 'power', label: t.packMedium, price: '19', credits: 400, icon: <Rocket size={20} className="text-cyber-turquoise" /> },
-          { key: 'supernova', label: t.packLarge, price: '39', credits: 1000, icon: <Zap size={20} className="text-yellow-400" /> },
         ];
         return (
           <div className="py-12 animate-fadeIn max-w-6xl mx-auto space-y-20 px-4">
@@ -383,7 +366,7 @@ const App: React.FC = () => {
                     ) : (
                         <CloudCheck size={14} className="text-green-400" />
                     )}
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest hidden md:inline">Live Sync</span>
+                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest hidden md:inline">Neural Link Active</span>
                  </div>
              )}
 
