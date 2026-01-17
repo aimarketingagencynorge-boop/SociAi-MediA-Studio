@@ -1,0 +1,8 @@
+{
+  "name": "SociAI MediA Studio",
+  "description": "A futuristic, AI-driven social media management platform that automates content creation, planning, and performance analysis with a cyber-neon aesthetic.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

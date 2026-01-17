@@ -1,0 +1,13 @@
+
+{
+  "name": "sociai-media-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SociAI MediA Studio - Twoje AI Social Media Manager",
+  "scripts": {
+    "start": "serve ."
+  },
+  "dependencies": {
+    "serve": "^14.2.3"
+  }
+}
