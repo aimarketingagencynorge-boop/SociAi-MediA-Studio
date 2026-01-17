@@ -11,8 +11,9 @@ interface AcademyProps {
 export const Academy: React.FC<AcademyProps> = ({ lang }) => {
   const t = translations[lang];
   const courses = [
-    { title: lang === 'pl' ? "Mistrzostwo Promptów AI" : lang === 'ru' ? "Мастерство промптов ИИ" : "Mastering AI Prompts", level: "Beginner", time: "45 min", type: "Video", color: "cyber-purple" },
-    { title: lang === 'pl' ? "Strategia Viral Reels 2025" : lang === 'ru' ? "Стратегия виральных Reels" : "Viral Reels Strategy 2025", level: "Intermediate", time: "1.5 hrs", type: "Workshop", color: "cyber-turquoise" },
+    // Fixed: Removed comparison with 'ru' as it is not part of the Language type ('pl' | 'en')
+    { title: lang === 'pl' ? "Mistrzostwo Promptów AI" : "Mastering AI Prompts", level: "Beginner", time: "45 min", type: "Video", color: "cyber-purple" },
+    { title: lang === 'pl' ? "Strategia Viral Reels 2025" : "Viral Reels Strategy 2025", level: "Intermediate", time: "1.5 hrs", type: "Workshop", color: "cyber-turquoise" },
   ];
 
   return (

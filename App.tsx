@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, BrandProfile, SocialPost, Notification } from './types';
 import { getNavigation, MOCK_NOTIFICATIONS } from './constants';
@@ -8,7 +7,6 @@ import { Planner } from './components/Planner';
 import { Academy } from './components/Academy';
 import { DockingBay } from './components/DockingBay';
 import { Settings } from './components/Settings';
-import { NeonCard } from './components/NeonCard';
 import { NotificationCenter } from './components/NotificationCenter';
 import { PaymentModal } from './components/PaymentModal';
 import { Auth } from './components/Auth';
@@ -26,7 +24,6 @@ import {
   Crown,
   Activity,
   RefreshCcw,
-  AlertTriangle,
   Plus,
   Flame,
   Rocket,
@@ -55,7 +52,6 @@ const App: React.FC = () => {
   const t = translations[lang];
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Persistence & Sync Logic
   useEffect(() => {
     try {
       const savedProfile = localStorage.getItem('sociai_profile');
@@ -83,7 +79,6 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Simulate Cloud Sync whenever critical data changes
   useEffect(() => {
     if (!isLoggedIn) return;
     
@@ -98,7 +93,7 @@ const App: React.FC = () => {
             localStorage.setItem('sociai_session', isLoggedIn.toString());
             setIsSyncing(false);
         } catch (e) {
-            console.warn("Storage quota limit. Cloud Sync would handle this on a real server.", e);
+            console.warn("Storage quota limit.", e);
             setIsSyncing(false);
         }
     }, 1500);
@@ -252,7 +247,7 @@ const App: React.FC = () => {
                 onUpdateCredits={updateCredits} 
                 onUpdatePosts={setPosts}
             />
-        ) : <div>Please complete onboarding.</div>;
+        ) : <div>Complete Profile Setup</div>;
       case View.ACADEMY:
         return <Academy lang={lang} />;
       case View.DOCKING_BAY:
@@ -267,7 +262,7 @@ const App: React.FC = () => {
               if (updated.isAdmin) setCredits(999999);
             }} 
           />
-        ) : <div>Please complete onboarding.</div>;
+        ) : <div>Complete Profile Setup</div>;
       case View.SUBSCRIPTIONS:
         const plans = [
           { key: 'starter', label: t.starter, price: '29', credits: 100, features: t.features.starter, icon: <Activity size={24} className="text-gray-400" /> },
@@ -287,9 +282,9 @@ const App: React.FC = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end">
                 {plans.map(plan => (
-                  <NeonCard 
+                  <div 
                     key={plan.key} 
-                    className={`relative transition-all duration-500 ${plan.highlight ? 'scale-105 border-cyber-purple/50 bg-cyber-purple/5 z-10' : 'opacity-80 hover:opacity-100'}`}
+                    className={`glass-card p-8 rounded-3xl relative transition-all duration-500 ${plan.highlight ? 'scale-105 border-cyber-purple/50 bg-cyber-purple/5 z-10' : 'opacity-80 hover:opacity-100'}`}
                   >
                     {plan.highlight && (
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-cyber-purple px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-[0_0_15px_#8C4DFF]">
@@ -324,45 +319,6 @@ const App: React.FC = () => {
                         {t.selectPlan}
                       </button>
                     </div>
-                  </NeonCard>
-                ))}
-              </div>
-            </div>
-
-            <div id="boost-packs">
-              <div className="text-center mb-10">
-                <h2 className="text-2xl md:text-3xl font-futuristic font-bold neon-text-cyan uppercase tracking-widest inline-flex items-center gap-3">
-                  <Zap size={32} /> {t.boostPacksTitle}
-                </h2>
-                <p className="text-gray-500 text-[10px] mt-2 uppercase tracking-[0.2em]">{t.boostPacksSub}</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {boostPacks.map(pack => (
-                  <div 
-                    key={pack.key} 
-                    className="p-1 rounded-2xl bg-gradient-to-br from-white/10 to-transparent hover:from-cyber-turquoise/30 hover:to-cyber-purple/30 transition-all duration-500"
-                  >
-                    <div className="bg-cyber-dark/80 backdrop-blur-md p-6 rounded-2xl flex items-center justify-between border border-white/5 h-full">
-                       <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-white">
-                             {pack.icon}
-                          </div>
-                          <div>
-                             <h4 className="font-bold text-white uppercase tracking-wider">{pack.label}</h4>
-                             <p className="text-cyber-turquoise font-black text-sm">+{pack.credits} <span className="text-[10px] text-gray-500 uppercase">{t.credits}</span></p>
-                          </div>
-                       </div>
-                       <div className="text-right">
-                          <p className="text-xl font-black text-white">${pack.price}</p>
-                          <button 
-                            onClick={() => setActivePaymentPlan({...pack, label: `${pack.label} (${t.oneTime})`})}
-                            className="mt-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition"
-                          >
-                            {t.buyCredits}
-                          </button>
-                       </div>
-                    </div>
                   </div>
                 ))}
               </div>
@@ -387,7 +343,6 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* DESKTOP SIDEBAR */}
       {showSidebar && (
         <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} border-r border-white/5 bg-cyber-dark transition-all duration-300 hidden md:flex flex-col fixed h-full z-50`}>
           <div className="p-6 flex items-center gap-3">
@@ -402,18 +357,6 @@ const App: React.FC = () => {
             ))}
           </nav>
           <div className="p-4 mt-auto">
-             {isSidebarOpen && (
-               <div className="mb-4 px-4">
-                  <p className="text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">Partner Engine</p>
-                  <p className="text-[10px] text-cyber-turquoise font-bold">usetheforce.ai</p>
-               </div>
-             )}
-            <button 
-              onClick={handleReset}
-              className="w-full flex items-center gap-4 px-4 py-3 text-cyber-magenta hover:bg-cyber-magenta/10 rounded-xl transition border border-transparent hover:border-cyber-magenta/20 mb-2"
-            >
-                <RefreshCcw size={20} /> {isSidebarOpen && <span className="font-medium">{t.resetStudio}</span>}
-            </button>
             <button 
               onClick={handleLogout}
               className="w-full flex items-center gap-4 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition"
@@ -426,18 +369,13 @@ const App: React.FC = () => {
 
       <main className={`flex-1 transition-all duration-300 relative ${showSidebar ? (isSidebarOpen ? 'md:ml-64' : 'md:ml-20') : ''} mb-20 md:mb-0`}>
         <header className="sticky top-0 z-40 bg-cyber-dark/80 backdrop-blur-md border-b border-white/5 h-16 flex items-center justify-between px-4 md:px-8">
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-4">
              {showSidebar && (
                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition hidden md:block">
                  {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
                </button>
              )}
-             <div className="flex items-center gap-2 bg-yellow-500/10 px-2 md:px-3 py-1 rounded-full border border-yellow-500/20">
-                <AlertTriangle size={12} className="text-yellow-500" />
-                <span className="text-[9px] md:text-[10px] font-black text-yellow-500 uppercase tracking-widest">BETA</span>
-             </div>
              
-             {/* Cloud Sync Indicator */}
              {isLoggedIn && (
                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 group cursor-help" title={t.syncCloud}>
                     {isSyncing ? (
@@ -445,41 +383,31 @@ const App: React.FC = () => {
                     ) : (
                         <CloudCheck size={14} className="text-green-400" />
                     )}
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest hidden md:inline">Cloud</span>
+                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest hidden md:inline">Live Sync</span>
                  </div>
              )}
 
              {profile && isLoggedIn && (
-              <div className="flex items-center gap-2 md:gap-4 text-sm">
-                 <div className="flex items-center gap-2 bg-cyber-purple/10 px-2 md:px-3 py-1 rounded-full border border-cyber-purple/20">
+              <div className="flex items-center gap-4 text-sm">
+                 <div className="flex items-center gap-2 bg-cyber-purple/10 px-3 py-1 rounded-full border border-cyber-purple/20">
                     <BatteryCharging size={14} className="text-cyber-purple" />
                     {profile.isAdmin ? (
-                        <div className="flex items-center gap-1">
-                            <Infinity size={14} className="text-cyber-turquoise" />
-                            <span className="text-cyber-turquoise font-black text-[10px] uppercase tracking-tighter">UNLIMITED</span>
-                        </div>
+                        <span className="text-cyber-turquoise font-black text-[10px] uppercase tracking-widest">Unlimited</span>
                     ) : (
                         <span className="text-cyber-purple font-bold text-xs md:text-sm">{credits}</span>
                     )}
-                    <button 
-                      onClick={() => setCurrentView(View.SUBSCRIPTIONS)}
-                      className="ml-1 md:ml-2 w-5 h-5 bg-cyber-purple rounded-full flex items-center justify-center text-white hover:scale-110 transition"
-                      title={t.buyCredits}
-                    >
-                      <Plus size={10} />
-                    </button>
                  </div>
               </div>
              )}
           </div>
-          <div className="flex items-center gap-2 md:gap-4 relative">
-              <div className="flex items-center bg-white/5 rounded-full px-1.5 md:px-2 py-1 border border-white/10">
-                <Globe size={14} className="text-cyber-turquoise mr-1.5 md:mr-2 ml-1" />
+          <div className="flex items-center gap-4 relative">
+              <div className="flex items-center bg-white/5 rounded-full px-2 py-1 border border-white/10">
+                <Globe size={14} className="text-cyber-turquoise mr-2" />
                 {(['pl', 'en'] as const).map((l) => (
                   <button 
                     key={l} 
                     onClick={() => setLang(l)}
-                    className={`px-2 py-0.5 text-[9px] md:text-[10px] font-bold rounded-full transition ${lang === l ? 'bg-cyber-purple text-white shadow-lg shadow-cyber-purple/40' : 'text-gray-500 hover:text-white'}`}
+                    className={`px-2 py-0.5 text-[10px] font-bold rounded-full transition ${lang === l ? 'bg-cyber-purple text-white shadow-lg shadow-cyber-purple/40' : 'text-gray-500 hover:text-white'}`}
                   >
                     {l.toUpperCase()}
                   </button>
@@ -494,7 +422,7 @@ const App: React.FC = () => {
                   >
                     <Bell size={20} />
                     {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 w-4 h-4 bg-cyber-magenta rounded-full text-[9px] font-black text-white flex items-center justify-center border border-cyber-dark shadow-[0_0_8px_rgba(199,76,255,0.6)]">
+                      <span className="absolute top-1 right-1 w-4 h-4 bg-cyber-magenta rounded-full text-[9px] font-black text-white flex items-center justify-center border border-cyber-dark">
                         {unreadCount}
                       </span>
                     )}
@@ -513,19 +441,6 @@ const App: React.FC = () => {
                   )}
                 </div>
               )}
-
-              {profile && isLoggedIn && (
-                <div 
-                  className="w-8 h-8 rounded-full bg-cyber-dark border border-white/20 overflow-hidden ring-2 ring-cyber-purple/20 group cursor-pointer"
-                  onClick={() => setCurrentView(View.SETTINGS)}
-                >
-                  {profile?.logoUrl ? (
-                     <img src={profile.logoUrl} alt="Logo" className="w-full h-full object-cover group-hover:scale-110 transition" />
-                  ) : (
-                     <img src="https://picsum.photos/32/32" alt="Avatar" className="w-full h-full object-cover group-hover:scale-110 transition" />
-                  )}
-                </div>
-              )}
           </div>
         </header>
 
@@ -534,7 +449,6 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* MOBILE BOTTOM NAVIGATION */}
       {showSidebar && (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-cyber-dark/90 backdrop-blur-xl border-t border-white/10 flex items-center justify-around px-2 z-[60] shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
            {getNavigation(lang).slice(0, 5).map(item => (
@@ -545,7 +459,6 @@ const App: React.FC = () => {
               >
                  {item.icon}
                  <span className="text-[8px] font-black uppercase mt-1 tracking-widest">{item.label.split(' ')[0]}</span>
-                 {currentView === item.id && <div className="w-1 h-1 bg-cyber-purple rounded-full mt-1 shadow-[0_0_8px_#8C4DFF]" />}
               </button>
            ))}
         </nav>
