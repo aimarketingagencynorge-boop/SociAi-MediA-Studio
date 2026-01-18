@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { NeonCard } from './NeonCard';
 import { translations, Language } from '../translations';
 import { BrandProfile } from '../types';
+import { dbService } from '../services/db';
 import { LogIn, UserPlus, Mail, Lock, AlertCircle } from 'lucide-react';
 
 interface AuthProps {
@@ -21,18 +21,25 @@ export const Auth: React.FC<AuthProps> = ({ lang, onLogin, onSignup }) => {
   const handleAuth = () => {
     setError('');
     
+    if (!email || !password) {
+        setError('Wszystkie pola są wymagane.');
+        return;
+    }
+
     if (isLogin) {
-      const savedProfileStr = localStorage.getItem('sociai_profile');
-      if (savedProfileStr) {
-        const savedProfile = JSON.parse(savedProfileStr) as BrandProfile;
-        if (savedProfile.email === email && savedProfile.password === password) {
+      const savedProfile = dbService.getUser(email);
+      if (savedProfile) {
+        if (savedProfile.password === password) {
           onLogin(savedProfile);
+          return;
+        } else {
+          setError('Nieprawidłowe hasło.');
           return;
         }
       }
       setError(t.invalidAuth);
     } else {
-      // Signup flow is handled by onboarding, but here we could pre-initialize
+      // Signup triggers onboarding flow
       onSignup();
     }
   };
