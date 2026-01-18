@@ -21,7 +21,8 @@ import {
   LogOut, 
   BatteryCharging,
   LogIn,
-  AlertCircle
+  AlertCircle,
+  Home
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -140,6 +141,14 @@ const App: React.FC = () => {
     setCurrentView(View.LANDING);
   };
 
+  const handleLogoClick = () => {
+    if (isLoggedIn) {
+      setCurrentView(View.DASHBOARD);
+    } else {
+      setCurrentView(View.LANDING);
+    }
+  };
+
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -220,10 +229,15 @@ const App: React.FC = () => {
 
       {showSidebar && (
         <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} border-r border-white/5 bg-cyber-dark transition-all duration-300 hidden md:flex flex-col fixed h-full z-50`}>
-          <div className="p-6 flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyber-purple to-cyber-magenta rounded-xl flex items-center justify-center shadow-[0_0_20px_#8C4DFF]"><Zap size={20} /></div>
+          <button 
+            onClick={handleLogoClick}
+            className="p-6 flex items-center gap-3 hover:opacity-80 transition-opacity text-left w-full group"
+            title={t.backToHome}
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-cyber-purple to-cyber-magenta rounded-xl flex items-center justify-center shadow-[0_0_20px_#8C4DFF] group-hover:scale-110 transition-transform"><Zap size={20} /></div>
             {isSidebarOpen && <span className="font-futuristic font-black text-xl tracking-tighter text-white">SociAI</span>}
-          </div>
+          </button>
+          
           <nav className="flex-1 px-4 py-8 space-y-2">
             {getNavigation(lang).map(item => (
               <button key={item.id} onClick={() => { setCurrentView(item.id as View); setIsNotificationsOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition ${currentView === item.id ? 'bg-cyber-purple/20 text-cyber-purple border border-cyber-purple/20' : 'text-gray-400 hover:bg-white/5'}`}>
@@ -239,10 +253,20 @@ const App: React.FC = () => {
         </aside>
       )}
 
-      <main className={`flex-1 transition-all duration-300 relative ${showSidebar ? (isSidebarOpen ? 'md:ml-64' : 'md:ml-20') : ''} mb-20 md:mb-0`}>
+      <main className={`flex-1 transition-all duration-300 relative ${showSidebar ? (isSidebarOpen ? 'md:ml-64' : 'md:ml-20') : ''} mb-20 md:mb-0 flex flex-col`}>
         <header className="sticky top-0 z-40 bg-cyber-dark/80 backdrop-blur-md border-b border-white/5 h-16 flex items-center justify-between px-8">
            <div className="flex items-center gap-6">
-             {showSidebar && <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400">{isSidebarOpen ? <X size={22} /> : <Menu size={22} />}</button>}
+             {showSidebar ? (
+               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400">{isSidebarOpen ? <X size={22} /> : <Menu size={22} />}</button>
+             ) : (
+               <button 
+                 onClick={handleLogoClick}
+                 className="flex items-center gap-3 hover:opacity-80 transition text-white"
+               >
+                 <Zap size={22} className="text-cyber-purple" />
+                 <span className="font-futuristic font-black tracking-tighter uppercase hidden sm:inline">SociAI Studio</span>
+               </button>
+             )}
              {isLoggedIn && profile && (
                <div className="flex items-center gap-3 bg-cyber-purple/10 border border-cyber-purple/20 px-4 py-1 rounded-full">
                  <BatteryCharging size={16} className="text-cyber-purple" />
@@ -279,9 +303,29 @@ const App: React.FC = () => {
            </div>
         </header>
 
-        <div className="p-4 md:p-8 max-w-7xl mx-auto min-h-screen">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto flex-1 w-full">
           {renderContent()}
         </div>
+
+        <footer className="py-12 border-t border-white/5 text-center space-y-4 bg-black/20">
+            <div className="flex items-center justify-center gap-4 mb-2">
+               <Zap size={20} className="text-cyber-purple animate-pulse" />
+               <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-white/60">
+                  Powered by <span className="text-cyber-turquoise">Gemini 2.5 Flash</span> & <span className="text-cyber-purple">Use the Force AI</span>
+               </p>
+            </div>
+            <p className="text-[10px] text-gray-600 uppercase tracking-widest font-bold">
+               May the AI be with you.
+            </p>
+            {!isLoggedIn && (
+               <button 
+                 onClick={() => setCurrentView(View.LANDING)}
+                 className="text-[10px] text-cyber-turquoise hover:text-white transition font-black uppercase tracking-widest flex items-center justify-center gap-2 mx-auto mt-4 group"
+               >
+                 <Home size={12} className="group-hover:-translate-y-0.5 transition-transform" /> {t.backToHome}
+               </button>
+            )}
+        </footer>
       </main>
     </div>
   );

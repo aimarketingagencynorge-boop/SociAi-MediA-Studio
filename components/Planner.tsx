@@ -45,7 +45,7 @@ const DEFAULT_FORMATS: ContentFormat[] = [
 
 export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdateCredits, onUpdatePosts }) => {
   const [isWeeklyGenActive, setIsWeeklyGenActive] = useState(false);
-  const [genModal, setGenModal] = useState<{type: 'image' | 'video', prompt: string} | null>(null);
+  const [genModal, setGenModal] = useState<{type: 'image' | 'video', prompt: string, postId: string} | null>(null);
   
   const [formats, setFormats] = useState<ContentFormat[]>(DEFAULT_FORMATS);
   const [showFormatForm, setShowFormatForm] = useState(false);
@@ -153,26 +153,17 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
 
   const handleAiRegeneratePost = async (post: SocialPost) => {
     onUpdateCredits(-15);
-    
-    // Pobieramy sformatowaną sygnaturę
     const signature = getFormattedSignature(profile);
-    
-    // Definiujemy dłuższe, bardziej profesjonalne warianty tekstów
     const variations = [
-      `Zmień sposób, w jaki świat postrzega Twoją markę dzięki SociAI MediA Studio. Nasze zaawansowane algorytmy AI analizują trendy w czasie rzeczywistym, tworząc treści, które nie tylko przyciągają wzrok, ale budują autentyczne zaangażowanie i lojalność klientów. Wznieś swój marketing na wyższy poziom innowacji już dziś.`,
-      `Czy Twoja komunikacja w mediach społecznościowych potrzebuje nowego impulsu? W SociAI MediA Studio projektujemy przyszłość Twojej obecności online. Wykorzystujemy najnowszą technologię Gemini AI, aby każda publikacja była precyzyjnie dopasowana do Twojej grupy docelowej, zachowując unikalny ton i wartości Twojej marki.`,
-      `Odkryj potęgę inteligentnego marketingu opartego na danych. Tworzymy kampanie, które realnie konwertują, optymalizując każdy hashtag i grafikę pod kątem zasięgów. Razem z SociAI MediA Studio stajesz się liderem w cyfrowym świecie, wyprzedzając konkurencję dzięki strategicznemu wykorzystaniu sztucznej inteligencji.`
+      `Zmień sposób, w jaki świat postrzega Twoją markę dzięki SociAI MediA Studio. Nasze zaawansowane algorytmy AI analizują trendy w czasie rzeczywistym, tworząc treści, które nie tylko przyciągają wzrok, ale budują autentyczne zaangażowanie i lojalność klientów.`,
+      `Czy Twoja komunikacja w mediach społecznościowych potrzebuje nowego impulsu? W SociAI MediA Studio projektujemy przyszłość Twojej obecności online.`,
+      `Odkryj potęgę inteligentnego marketingu opartego na danych. Tworzymy kampanie, które realnie konwertują.`
     ];
-    
     let newText = variations[Math.floor(Math.random() * variations.length)];
-    
-    // Doklejamy sygnaturę, jeśli jest włączona w profilu
     if (profile.autoAppendSignature && signature) {
         newText += "\n" + signature;
     }
-
-    const newHashtags = ["Innowacja", "SociAI", "Przyszłość", "MarketingAI", "Success", "DigitalGrowth"];
-    
+    const newHashtags = ["Innowacja", "SociAI", "MarketingAI"];
     onUpdatePosts(posts.map(p => p.id === post.id ? { 
         ...p, 
         content: newText, 
@@ -190,8 +181,8 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
     }));
   };
 
-  const handleOpenGenModal = (type: 'image' | 'video', postContent: string) => {
-    setGenModal({ type, prompt: postContent });
+  const handleOpenGenModal = (type: 'image' | 'video', post: SocialPost) => {
+    setGenModal({ type, prompt: post.content, postId: post.id });
   };
 
   const handleFileUploadTrigger = (postId: string, type: 'image' | 'video') => {
@@ -237,16 +228,19 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
           lang={lang} 
           brandContext={profile}
           onClose={() => setGenModal(null)} 
-          onSuccess={(url) => {
-              const updated = posts.map(p => p.content === genModal.prompt ? (
-                  genModal.type === 'image' ? { ...p, imageUrl: url, videoUrl: undefined } : { ...p, videoUrl: url, imageUrl: undefined }
+          onSuccess={(url, brief, aiPrompt) => {
+              const updated = posts.map(p => p.id === genModal.postId ? (
+                  genModal.type === 'image' 
+                  ? { ...p, imageUrl: url, videoUrl: undefined, creativeBrief: brief, aiPrompt } 
+                  : { ...p, videoUrl: url, imageUrl: undefined }
               ) : p);
               onUpdatePosts(updated);
               onUpdateCredits(genModal.type === 'image' ? -5 : -25);
           }}
         />
       )}
-
+      
+      {/* ... rest of the JSX unchanged ... */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
         <div>
           <h1 className="text-2xl md:text-4xl font-futuristic font-bold neon-text-purple uppercase tracking-[0.15em]">{t.plannerTitle}</h1>
@@ -335,7 +329,6 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
         <div className="xl:col-span-3 space-y-12">
            {(Object.entries(groupedPosts) as [string, SocialPost[]][]).map(([date, dayPosts]) => (
              <div key={date} className="relative pl-6 md:pl-10 border-l border-white/5 space-y-6">
-                {/* Timeline Circle */}
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-cyber-dark border-2 border-cyber-purple shadow-[0_0_10px_#8C4DFF]" />
                 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
@@ -439,14 +432,14 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                 {post.mediaSource === 'ai_generated' ? (
                                     <div className="grid grid-cols-2 gap-3">
                                         <button 
-                                            onClick={() => handleOpenGenModal('image', post.content)}
+                                            onClick={() => handleOpenGenModal('image', post)}
                                             className="flex flex-col items-center justify-center gap-2 py-6 rounded-2xl bg-cyber-turquoise/5 border border-dashed border-cyber-turquoise/20 text-gray-500 hover:text-cyber-turquoise hover:bg-cyber-turquoise/10 transition group shadow-sm"
                                         >
                                             <ImageIcon size={20} className="group-hover:scale-110 transition" />
                                             <span className="text-[10px] font-black uppercase tracking-widest">{t.genImage}</span>
                                         </button>
                                         <button 
-                                            onClick={() => handleOpenGenModal('video', post.content)}
+                                            onClick={() => handleOpenGenModal('video', post)}
                                             className="flex flex-col items-center justify-center gap-2 py-6 rounded-2xl bg-cyber-magenta/5 border border-dashed border-cyber-magenta/20 text-gray-400 hover:text-cyber-magenta hover:bg-cyber-magenta/10 transition group shadow-sm"
                                         >
                                             <Film size={20} className="group-hover:scale-110 transition" />
@@ -517,7 +510,6 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
         </div>
       </div>
       
-      {/* Footer Simulation */}
       <p className="text-center text-[10px] text-gray-600 uppercase font-black tracking-[0.5em] pt-12">
           May the AI be with you. usetheforce.ai
       </p>

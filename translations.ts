@@ -133,6 +133,8 @@ export const translations = {
     phone: "Telefon",
     address: "Adres",
     identitySub: "AI wykryło parametry Twojego Holokronu.",
+    backToHome: "Powróć na stronę główną",
+    poweredBy: "Zasilane przez Gemini 2.5 Flash",
     features: {
       starter: ["100 Kredytów", "1 Platforma", "Analityka"],
       pro: ["1000 Kredytów", "Wszystkie Platformy", "Wideo AI", "Iskry Mocy"],
@@ -271,6 +273,8 @@ export const translations = {
     phone: "Phone",
     address: "Address",
     identitySub: "AI detected your Holocron parameters.",
+    backToHome: "Back to Home",
+    poweredBy: "Powered by Gemini 2.5 Flash",
     features: {
       starter: ["100 Credits", "1 Platform", "Analytics"],
       pro: ["1000 Credits", "All Platforms", "AI Video", "Force Sparks"],

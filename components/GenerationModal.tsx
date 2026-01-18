@@ -10,7 +10,7 @@ interface GenerationModalProps {
   prompt: string;
   lang: Language;
   onClose: () => void;
-  onSuccess: (url: string) => void;
+  onSuccess: (url: string, brief?: any, aiPrompt?: string) => void;
   brandContext?: BrandProfile;
 }
 
@@ -48,16 +48,21 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
     setProgress(5);
 
     try {
-      let url = '';
-      if (type === 'image') {
-        url = await generateAIImage(prompt, brandContext);
+      if (type === 'image' && brandContext) {
+        const result = await generateAIImage(prompt, brandContext, 'instagram');
+        setResultUrl(result.url);
+        setProgress(100);
+        setIsDone(true);
+        onSuccess(result.url, result.brief, result.prompt);
+      } else if (type === 'video') {
+        const url = await generateAIVideo(prompt);
+        setResultUrl(url);
+        setProgress(100);
+        setIsDone(true);
+        onSuccess(url);
       } else {
-        url = await generateAIVideo(prompt);
+        throw new Error("Missing context for image generation.");
       }
-      setResultUrl(url);
-      setProgress(100);
-      setIsDone(true);
-      onSuccess(url);
     } catch (e: any) {
       console.error(e);
       if (e.message?.includes("Requested entity was not found")) {

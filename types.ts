@@ -1,5 +1,4 @@
 
-
 export enum View {
   LANDING = 'LANDING',
   AUTH = 'AUTH',
@@ -78,6 +77,9 @@ export interface SocialPost {
   status: PostStatus;
   mediaSource: MediaSource;
   format?: string; 
+  // Fields for AI Image Pipeline traceability
+  creativeBrief?: any;
+  aiPrompt?: string;
 }
 
 export interface AnalyticsData {
