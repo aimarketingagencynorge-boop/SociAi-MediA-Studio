@@ -5,35 +5,66 @@ import { Language } from "../translations";
 // Initialize the Google GenAI client with API key from environment
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// Analyze brand identity using search grounding
+/**
+ * Deep scan of a brand's website using Google Search grounding.
+ * This function specifically looks for visual assets (logo URLs) and brand colors.
+ */
 export const analyzeBrandIdentity = async (name: string, website?: string): Promise<Partial<BrandProfile>> => {
   const ai = getAI();
-  const prompt = `Analyze brand "${name}" ${website ? `at ${website}` : ''}. Return JSON with primaryColor (Hex), tone (professional, funny, inspirational, edgy), targetAudience, and analysisSummary.`;
+  
+  const searchPrompt = `Search for the official web presence of brand "${name}" ${website ? `at the URL ${website}` : ''}.
+  I need a complete neural analysis of their brand identity. 
+  
+  TASK:
+  1. Identify the brand's primary and secondary HEX colors from their design system.
+  2. Find the DIRECT URL to their official logo (high-res PNG, SVG, or JPG).
+  3. Determine their target audience, brand tone (professional/edgy/funny), and a concise business description.
+  4. Formulate their core value proposition.
+
+  CRITICAL: Return ONLY valid JSON that matches the provided schema. Do not include markdown code blocks.`;
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: prompt,
+    contents: searchPrompt,
     config: {
-      tools: [{ googleSearch: {} }],
+      tools: [{ googleSearch: {} }], // Grounding for real-time web data
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          primaryColor: { type: Type.STRING },
-          tone: { type: Type.STRING },
+          primaryColor: { type: Type.STRING, description: "HEX code e.g. #FF0000" },
+          secondaryColor: { type: Type.STRING, description: "HEX code e.g. #0000FF" },
+          logoUrl: { type: Type.STRING, description: "Direct URL to logo file" },
+          tone: { type: Type.STRING, enum: ['professional', 'funny', 'inspirational', 'edgy'] },
           targetAudience: { type: Type.STRING },
-          analysisSummary: { type: Type.STRING }
+          businessDescription: { type: Type.STRING },
+          valueProposition: { type: Type.STRING },
+          brandVoice: { type: Type.STRING }
         },
-        required: ["primaryColor", "tone", "targetAudience"]
+        required: ["primaryColor", "logoUrl", "tone", "targetAudience"]
       }
     }
   });
 
   try {
-    const data = JSON.parse(response.text || "{}");
-    return { ...data, autoAppendSignature: true };
+    // Some responses might still include markdown blocks despite instructions
+    let text = response.text || "{}";
+    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    const data = JSON.parse(text);
+    
+    return { 
+      ...data, 
+      autoAppendSignature: true 
+    };
   } catch (e) {
-    return { autoAppendSignature: true };
+    console.error("Failed to parse identity scan:", e);
+    // Return safe defaults if parsing fails
+    return { 
+      primaryColor: '#8C4DFF', 
+      tone: 'professional', 
+      targetAudience: 'General Professionals',
+      autoAppendSignature: true 
+    };
   }
 };
 
@@ -50,7 +81,7 @@ export const getFormattedSignature = (profile: BrandProfile): string => {
 // Generate initial 3 posts
 export const generateInitialStrategy = async (profile: BrandProfile, lang: Language): Promise<SocialPost[]> => {
   const ai = getAI();
-  const prompt = `Generate 3 high-impact social media posts for "${profile.name}". Language: ${lang}. Return JSON array. Include platform, content, hashtags, date (YYYY-MM-DD).`;
+  const prompt = `Generate 3 high-impact social media posts for "${profile.name}". Language: ${lang}. Return JSON array. Include platform, content, hashtags, date (YYYY-MM-DD). Use their brand voice: ${profile.brandVoice || 'Professional'}.`;
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -63,12 +94,12 @@ export const generateInitialStrategy = async (profile: BrandProfile, lang: Langu
           type: Type.OBJECT,
           properties: {
             id: { type: Type.STRING },
-            platform: { type: Type.STRING },
+            platform: { type: Type.STRING, enum: ['instagram', 'facebook', 'linkedin', 'tiktok'] },
             date: { type: Type.STRING },
             content: { type: Type.STRING },
             hashtags: { type: Type.ARRAY, items: { type: Type.STRING } },
-            status: { type: Type.STRING },
-            mediaSource: { type: Type.STRING }
+            status: { type: Type.STRING, enum: ['draft', 'needs_review', 'approved'] },
+            mediaSource: { type: Type.STRING, enum: ['ai_generated', 'client_upload'] }
           },
           required: ["id", "platform", "date", "content", "hashtags", "status", "mediaSource"]
         }
