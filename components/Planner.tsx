@@ -71,7 +71,8 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
             imageHistory: [...(p.imageHistory || []), result.url],
             variantCount: nextSeed,
             creativeBrief: result.brief,
-            aiPrompt: result.prompt
+            aiPrompt: result.prompt,
+            aiDebug: result.debug
         } : p));
     } catch (e) {
         console.error("Regeneration failed", e);
@@ -111,7 +112,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
           lang={lang} 
           brandContext={profile}
           onClose={() => setGenModal(null)} 
-          onSuccess={(url, brief, aiPrompt, mode) => {
+          onSuccess={(url, brief, aiPrompt, mode, aiDebug) => {
               onUpdatePosts(posts.map(p => p.id === genModal.postId ? {
                 ...p,
                 imageUrl: url,
@@ -120,7 +121,8 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                 aiPrompt,
                 aiMode: mode,
                 imageHistory: [url],
-                variantCount: 0
+                variantCount: 0,
+                aiDebug
               } : p));
               onUpdateCredits(genModal.type === 'image' ? -5 : -25);
           }}
@@ -198,6 +200,22 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                                 <span className="text-[9px] font-black text-white uppercase tracking-widest">Variant v{post.variantCount + 1}</span>
                                             </div>
                                         )}
+
+                                        {/* AI DEBUG INDICATOR */}
+                                        {post.aiDebug && (
+                                            <div className="absolute top-3 left-3 flex gap-1">
+                                                {post.aiDebug.usedReferenceImages && (
+                                                    <div className="bg-green-500/80 p-1 rounded-lg text-white" title="Used Ref Style Assets">
+                                                        <Shield size={10} />
+                                                    </div>
+                                                )}
+                                                {post.aiDebug.missingFields.length > 0 && (
+                                                    <div className="bg-yellow-500/80 p-1 rounded-lg text-white" title={`Missing context: ${post.aiDebug.missingFields.join(', ')}`}>
+                                                        <Info size={10} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 ) : post.mediaSource === 'ai_generated' ? (
                                     <div className="grid grid-cols-2 gap-3">
@@ -224,3 +242,6 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
     </div>
   );
 };
+
+// Dodatkowe ikony pomocnicze dla UI debugu
+const Info = ({size}: {size: number}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>;

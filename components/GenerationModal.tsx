@@ -10,7 +10,7 @@ interface GenerationModalProps {
   prompt: string;
   lang: Language;
   onClose: () => void;
-  onSuccess: (url: string, brief?: any, aiPrompt?: string, mode?: ImageGenMode) => void;
+  onSuccess: (url: string, brief?: any, aiPrompt?: string, mode?: ImageGenMode, aiDebug?: any) => void;
   brandContext?: BrandProfile;
 }
 
@@ -42,11 +42,13 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
 
     try {
       if (type === 'image' && brandContext) {
+        setLogs(prev => [...prev, "[AI] Loading Brand Context & Reference Assets..."]);
         const result = await generateAIImage(prompt, brandContext, 'instagram', mode);
+        setLogs(prev => [...prev, "[AI] Brief synthesized.", "[AI] Rendering scene..."]);
         setResultUrl(result.url);
         setProgress(100);
         setIsDone(true);
-        onSuccess(result.url, result.brief, result.prompt, mode);
+        onSuccess(result.url, result.brief, result.prompt, mode, result.debug);
       } else if (type === 'video') {
         const url = await generateAIVideo(prompt);
         setResultUrl(url);

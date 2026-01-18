@@ -82,6 +82,14 @@ export interface SocialPost {
   aiMode?: ImageGenMode;
   imageHistory?: string[];
   variantCount?: number;
+  // Deep Debug Fields
+  aiDebug?: {
+    brandContextSnapshot: string;
+    missingFields: string[];
+    paletteUsed: string[];
+    usedReferenceImages: boolean;
+    briefJson: any;
+  };
 }
 
 export interface AnalyticsData {

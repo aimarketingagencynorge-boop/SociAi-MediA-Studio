@@ -5,6 +5,20 @@ import { Language } from "../translations";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+/**
+ * Konwertuje URL/Base64 na format akceptowany przez Gemini API
+ */
+const prepareImagePart = (dataUrl: string) => {
+  const [header, data] = dataUrl.split(',');
+  const mimeType = header.match(/:(.*?);/)?.[1] || 'image/png';
+  return {
+    inlineData: {
+      data,
+      mimeType
+    }
+  };
+};
+
 export const analyzeBrandIdentity = async (name: string, website?: string): Promise<Partial<BrandProfile>> => {
   const ai = getAI();
   const searchPrompt = `As a JedAi Master of Digital Analysis, perform a deep Holonet Scan for the brand "${name}" ${website ? `at ${website}` : ''}.
@@ -111,8 +125,7 @@ export const generateWeeklyStrategy = async (profile: BrandProfile, lang: Langua
 };
 
 /**
- * ZAAWANSOWANY PIPELINE GENEROWANIA OBRAZÓW
- * Wersja 2.0: PHOTO vs POSTER, No Text Policy, Regenerate Seed
+ * ZAAWANSOWANY PIPELINE GENEROWANIA OBRAZÓW V3.0
  */
 export const generateAIImage = async (
   postContent: string, 
@@ -120,22 +133,46 @@ export const generateAIImage = async (
   platform: string = 'instagram',
   mode: ImageGenMode = 'PHOTO',
   variantSeed: number = 0
-): Promise<{url: string, brief: any, prompt: string, negative: string}> => {
+): Promise<{url: string, brief: any, prompt: string, negative: string, debug: any}> => {
     const ai = getAI();
     
-    // ETAP A: CREATIVE BRIEF
-    const briefPrompt = `You are a Creative Director. Create a JSON brief for an image.
-    MODE: ${mode} (PHOTO means realistic lifestyle/product photo, POSTER means background for text).
-    BRAND: ${profile.name} (${profile.industry}). Voice: ${profile.brandVoice || profile.tone}. 
-    USPs: ${profile.valueProposition}. Colors: ${profile.primaryColor}.
-    POST: "${postContent}"
-    VARIANT_SEED: ${variantSeed} (Add slight variation if > 0).
+    // 1. Sprawdzenie brakujących pól kontekstu
+    const missingFields: string[] = [];
+    if (!profile.brandVoice) missingFields.push('brandVoice');
+    if (!profile.businessDescription) missingFields.push('businessDescription');
+    if (!profile.valueProposition) missingFields.push('valueProposition');
+    if (!profile.styleReferenceUrls || profile.styleReferenceUrls.length === 0) missingFields.push('styleReferenceUrls');
     
-    RULES: 
-    1. NO TEXT on image.
-    2. Focus on ${profile.industry} aesthetics. 
-    3. If industry is food/gastro, use appetizing food photography style.
-    4. PHOTO mode must be photorealistic. POSTER mode must be a clean composition.`;
+    const brandContextSnapshot = `Brand: ${profile.name}, Ind: ${profile.industry}, Voice: ${profile.brandVoice || 'N/A'}`;
+
+    // ETAP A: GENEROWANIE BRIEFU (Gemini 3 Pro)
+    const briefPrompt = `You are a World-Class Creative Director. Analyze the following Brand Identity and Post Content to create a visual Brief.
+    
+    BRAND IDENTITY:
+    - Name: ${profile.name}
+    - Industry: ${profile.industry}
+    - Strategy/Tone: ${profile.tone}
+    - Brand Voice: ${profile.brandVoice || 'Standard professional'}
+    - Description: ${profile.businessDescription || 'A modern company'}
+    - Key Differentiators: ${profile.valueProposition || 'Premium quality'}
+    - Target Audience: ${profile.targetAudience}
+    - Brand Kit Colors: ${profile.primaryColor}, ${profile.secondaryColor || 'None'}
+    
+    POST CONTENT:
+    "${postContent}"
+    
+    IMAGE MODE: ${mode}
+    PLATFORM: ${platform}
+    VARIANT SEED: ${variantSeed}
+
+    REQUIREMENTS:
+    1. Create a detailed visual brief for an image that captures the brand essence.
+    2. Define a complete 5-color palette (3 core + 2 accents + neutrals).
+    3. Determine the main subject based on industry best practices (e.g., appetizing close-ups for gastro, clean professional environments for B2B).
+    4. NO TEXT in the image.
+    5. Style must be consistent with ${profile.industry} aesthetics.
+
+    Output ONLY JSON following the schema.`;
 
     const briefResponse = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
@@ -145,34 +182,65 @@ export const generateAIImage = async (
         responseSchema: {
           type: Type.OBJECT,
           properties: {
+            industry: { type: Type.STRING },
             main_subject: { type: Type.STRING },
             visual_style: { type: Type.STRING },
             mood: { type: Type.STRING },
-            color_direction: { type: Type.ARRAY, items: { type: Type.STRING } },
-            composition: { type: Type.STRING },
-            keywords: { type: Type.ARRAY, items: { type: Type.STRING } }
-          },
-          required: ["main_subject", "visual_style", "mood", "color_direction"]
+            keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+            goal: { type: Type.STRING, enum: ['sell', 'promo', 'inform', 'brand'] },
+            brand_voice_rules: { type: Type.ARRAY, items: { type: Type.STRING } },
+            palette: {
+              type: Type.OBJECT,
+              properties: {
+                primary: { type: Type.ARRAY, items: { type: Type.STRING } },
+                accent: { type: Type.ARRAY, items: { type: Type.STRING } },
+                neutral_bg: { type: Type.STRING },
+                neutral_text: { type: Type.STRING }
+              }
+            },
+            use_reference_assets: { type: Type.BOOLEAN }
+          }
         }
       }
     });
 
     const brief = JSON.parse(briefResponse.text || "{}");
+    const paletteStr = [...(brief.palette?.primary || []), ...(brief.palette?.accent || [])].join(', ');
 
-    // ETAP B: SYNTEZA PROMPTU
-    const stylePrefix = mode === 'PHOTO' ? "A photorealistic, premium lifestyle/product photography image of" : "A clean, artistic background composition of";
-    const finalImagePrompt = `${stylePrefix} ${brief.main_subject}. 
-    Mood: ${brief.mood}. Composition: ${brief.composition}. 
-    Lighting/Palette: ${brief.color_direction.join(' and ')}. 
-    Style: ${brief.visual_style}. 
-    Details: ${brief.keywords?.join(', ')}. 
-    Variant adjustment: ${variantSeed}. Highly detailed, 8k, professional grade.`;
+    // ETAP B: PRZYGOTOWANIE ASSETÓW REFERENCYJNYCH
+    const contentParts: any[] = [];
+    
+    // Dodaj zdjęcia referencyjne stylu (max 3)
+    if (profile.styleReferenceUrls && profile.styleReferenceUrls.length > 0) {
+      profile.styleReferenceUrls.slice(0, 3).forEach(url => {
+        contentParts.push(prepareImagePart(url));
+      });
+    }
 
-    const negativePrompt = "no text, no letters, no typography, no paragraphs, no gibberish, no watermark, no logo text, no UI, no futuristic HUD, no poster layout, no signage, no distorted words, no random alphabets";
+    // Dodaj logo jeśli jest dostępne
+    if (profile.logoUrl) {
+      contentParts.push(prepareImagePart(profile.logoUrl));
+    }
+
+    // ETAP C: SYNTEZA PROMPTU I GENEROWANIE OBRAZU (Gemini 2.5 Flash Image)
+    const stylePrefix = mode === 'PHOTO' ? "A photorealistic, high-end professional lifestyle and product photography shot of" : "A clean, high-impact artistic composition of";
+    const finalImagePrompt = `${stylePrefix} ${brief.main_subject}.
+    VISUAL STYLE: ${brief.visual_style}. 
+    MOOD: ${brief.mood}. 
+    PALETTE: Use a balanced mix of ${paletteStr} with ${brief.palette?.neutral_bg} as background tones.
+    CONSISTENCY: Ensure the lighting, atmosphere, and material quality are consistent with the provided reference images.
+    CONTEXT: Tailored for ${profile.name}'s ${brief.industry} market. 
+    KEYWORDS: ${brief.keywords?.join(', ')}.
+    INSTRUCTIONS: ${brief.brand_voice_rules?.join('. ')}. 
+    TECHNICAL: 8k resolution, cinematic lighting, sharp focus, professional color grading. Avoid monochrome red unless it's the primary brand color. Variant: ${variantSeed}.`;
+
+    const negativePrompt = "no text, no letters, no typography, no paragraphs, no gibberish, no watermark, no logo text, no UI, no futuristic HUD, no sci-fi interface, no poster layout, no monochrome red, no neon grid background, no signage, no distorted alphabets";
+
+    contentParts.push({ text: `${finalImagePrompt}. NEGATIVE: ${negativePrompt}` });
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
-      contents: `${finalImagePrompt}. Avoid: ${negativePrompt}`,
+      contents: { parts: contentParts },
       config: { 
         imageConfig: { 
           aspectRatio: platform === 'instagram' ? "1:1" : platform === 'linkedin' ? "4:3" : "16:9" 
@@ -188,9 +256,21 @@ export const generateAIImage = async (
       }
     }
 
-    if (!imageUrl) throw new Error("Image generation failed");
+    if (!imageUrl) throw new Error("JedAi engine failed to synthesize image data.");
 
-    return { url: imageUrl, brief, prompt: finalImagePrompt, negative: negativePrompt };
+    return { 
+      url: imageUrl, 
+      brief, 
+      prompt: finalImagePrompt, 
+      negative: negativePrompt,
+      debug: {
+        brandContextSnapshot,
+        missingFields,
+        paletteUsed: [...(brief.palette?.primary || []), ...(brief.palette?.accent || [])],
+        usedReferenceImages: (profile.styleReferenceUrls?.length || 0) > 0,
+        briefJson: brief
+      }
+    };
 };
 
 export const generateAIVideo = async (prompt: string): Promise<string> => {
