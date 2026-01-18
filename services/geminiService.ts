@@ -2,73 +2,78 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { BrandProfile, SocialPost, ContentFormat, Notification } from "../types";
 import { Language } from "../translations";
 
-// Initialize the Google GenAI client with API key from environment
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
- * Deep scan of a brand's website using Google Search grounding.
- * This function specifically looks for visual assets (logo URLs) and brand colors.
+ * Skanowanie Holonet - zaawansowana analiza marki.
  */
 export const analyzeBrandIdentity = async (name: string, website?: string): Promise<Partial<BrandProfile>> => {
+  const startTime = Date.now();
+  console.group("%c[SociAI Diagnostic] Holonet Scan", "color: #34E0F7; font-weight: bold;");
+  console.log("Targeting Mission:", name, website || "deep-space");
+
   const ai = getAI();
   
-  const searchPrompt = `Search for the official web presence of brand "${name}" ${website ? `at the URL ${website}` : ''}.
-  I need a complete neural analysis of their brand identity. 
+  const searchPrompt = `As a JedAi Master of Digital Analysis, perform a deep Holonet Scan for the brand "${name}" ${website ? `at ${website}` : ''}.
   
-  TASK:
-  1. Identify the brand's primary and secondary HEX colors from their design system.
-  2. Find the DIRECT URL to their official logo (high-res PNG, SVG, or JPG).
-  3. Determine their target audience, brand tone (professional/edgy/funny), and a concise business description.
-  4. Formulate their core value proposition.
+  EXTRACT & GENERATE:
+  1. Visual Identity: Find the primary brand HEX color and secondary accent.
+  2. Logo: Locate the high-res official logo URL (PNG/SVG) from metadata (og:image, favicon).
+  3. Brand Voice: Define their specific communication style.
+  4. Post Sparks: Generate 10 diverse, creative social media post ideas (topics only).
+  5. Core Info: Target audience, business description, and unique value proposition.
 
-  CRITICAL: Return ONLY valid JSON that matches the provided schema. Do not include markdown code blocks.`;
-
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: searchPrompt,
-    config: {
-      tools: [{ googleSearch: {} }], // Grounding for real-time web data
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          primaryColor: { type: Type.STRING, description: "HEX code e.g. #FF0000" },
-          secondaryColor: { type: Type.STRING, description: "HEX code e.g. #0000FF" },
-          logoUrl: { type: Type.STRING, description: "Direct URL to logo file" },
-          tone: { type: Type.STRING, enum: ['professional', 'funny', 'inspirational', 'edgy'] },
-          targetAudience: { type: Type.STRING },
-          businessDescription: { type: Type.STRING },
-          valueProposition: { type: Type.STRING },
-          brandVoice: { type: Type.STRING }
-        },
-        required: ["primaryColor", "logoUrl", "tone", "targetAudience"]
-      }
-    }
-  });
+  CRITICAL: Return ONLY a raw JSON object matching the schema. No markdown.`;
 
   try {
-    // Some responses might still include markdown blocks despite instructions
-    let text = response.text || "{}";
-    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    const data = JSON.parse(text);
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: searchPrompt,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            primaryColor: { type: Type.STRING },
+            secondaryColor: { type: Type.STRING },
+            logoUrl: { type: Type.STRING },
+            tone: { type: Type.STRING, enum: ['professional', 'funny', 'inspirational', 'edgy'] },
+            targetAudience: { type: Type.STRING },
+            businessDescription: { type: Type.STRING },
+            valueProposition: { type: Type.STRING },
+            brandVoice: { type: Type.STRING },
+            postIdeas: { type: Type.ARRAY, items: { type: Type.STRING } }
+          },
+          required: ["primaryColor", "logoUrl", "tone", "targetAudience", "postIdeas"]
+        }
+      }
+    });
+
+    const data = JSON.parse(response.text || "{}");
     
+    console.log("Holonet Data Retrieved:", data);
+    console.log("Scan Duration:", Date.now() - startTime, "ms");
+    console.groupEnd();
+
     return { 
       ...data, 
       autoAppendSignature: true 
     };
   } catch (e) {
-    console.error("Failed to parse identity scan:", e);
-    // Return safe defaults if parsing fails
+    console.error("Holonet Scan Interrupted:", e);
+    console.groupEnd();
+    // Fallback: Default palette if scan fails
     return { 
       primaryColor: '#8C4DFF', 
       tone: 'professional', 
-      targetAudience: 'General Professionals',
-      autoAppendSignature: true 
+      targetAudience: 'General Audience',
+      autoAppendSignature: true,
+      postIdeas: ["Wprowadzenie marki", "Nasza misja", "Nowy produkt"]
     };
   }
 };
 
-// Helper for signature formatting based on brand profile
 export const getFormattedSignature = (profile: BrandProfile): string => {
   const parts = [];
   if (profile.website) parts.push(`🌐 Website: ${profile.website}`);
@@ -78,10 +83,9 @@ export const getFormattedSignature = (profile: BrandProfile): string => {
   return parts.length > 0 ? `\n---\n${parts.join('\n')}` : '';
 };
 
-// Generate initial 3 posts
 export const generateInitialStrategy = async (profile: BrandProfile, lang: Language): Promise<SocialPost[]> => {
   const ai = getAI();
-  const prompt = `Generate 3 high-impact social media posts for "${profile.name}". Language: ${lang}. Return JSON array. Include platform, content, hashtags, date (YYYY-MM-DD). Use their brand voice: ${profile.brandVoice || 'Professional'}.`;
+  const prompt = `Generate 3 high-impact social media transmissions for "${profile.name}". Language: ${lang}. Return JSON array. Include platform, content, hashtags, date (YYYY-MM-DD). Use their brand voice: ${profile.brandVoice || 'Professional'}.`;
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -114,11 +118,10 @@ export const generateInitialStrategy = async (profile: BrandProfile, lang: Langu
   }
 };
 
-// Generate full weekly strategy based on content formats
 export const generateWeeklyStrategy = async (profile: BrandProfile, lang: Language, formats: ContentFormat[]): Promise<SocialPost[]> => {
   const ai = getAI();
   const formatsStr = formats.map(f => `${f.name}: ${f.keyword}`).join(', ');
-  const prompt = `Generate a full weekly content plan (7 posts) for "${profile.name}" in ${profile.industry} industry. 
+  const prompt = `Generate a full weekly mission map (7 transmissions) for "${profile.name}" in ${profile.industry} industry. 
   Tone: ${profile.tone}. Target Audience: ${profile.targetAudience}. 
   Content Formats to include: ${formatsStr}. 
   Language: ${lang}. Return JSON array of SocialPost objects with id, platform, date (YYYY-MM-DD), content, hashtags (array), status ('draft'), mediaSource ('ai_generated'), format.`;
@@ -155,27 +158,25 @@ export const generateWeeklyStrategy = async (profile: BrandProfile, lang: Langua
   }
 };
 
-// Generate AI Image using gemini-2.5-flash-image
 export const generateAIImage = async (prompt: string, profile?: BrandProfile): Promise<string> => {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
-      contents: `High-end futuristic professional social media graphic for: ${prompt}. Primary color: ${profile?.primaryColor || '#8C4DFF'}. Modern aesthetic.`,
+      contents: `Cinematic JedAi transmission graphic for: ${prompt}. Primary color: ${profile?.primaryColor || '#8C4DFF'}. Futuristic aesthetic.`,
       config: { imageConfig: { aspectRatio: "1:1" } }
     });
 
     for (const part of response.candidates[0].content.parts) {
       if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
     }
-    throw new Error("Failed to generate image");
+    throw new Error("Force link broken: Failed to generate image");
 };
 
-// Generate AI Video using veo-3.1-fast-generate-preview and poll for completion
 export const generateAIVideo = async (prompt: string): Promise<string> => {
   const ai = getAI();
   let operation = await ai.models.generateVideos({
     model: 'veo-3.1-fast-generate-preview',
-    prompt: `Cinematic professional social media video: ${prompt}`,
+    prompt: `Epic JedAi cinematic video: ${prompt}`,
     config: {
       numberOfVideos: 1,
       resolution: '720p',
@@ -189,17 +190,16 @@ export const generateAIVideo = async (prompt: string): Promise<string> => {
   }
 
   const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-  if (!downloadLink) throw new Error("Video generation failed - no URI in response");
+  if (!downloadLink) throw new Error("Video generation failed - no URI");
 
   const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
   const blob = await response.blob();
   return URL.createObjectURL(blob);
 };
 
-// Fetch latest industry trends with search grounding
 export const fetchLatestTrends = async (industry: string, lang: Language): Promise<Notification[]> => {
   const ai = getAI();
-  const prompt = `Latest viral social media trends for ${industry} as of today. Return 3 JSON notification objects (title, message, type). lang: ${lang}`;
+  const prompt = `Latest viral Force Sparks (trends) for ${industry} as of today. Return 3 JSON notification objects (title, message, type). lang: ${lang}`;
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",

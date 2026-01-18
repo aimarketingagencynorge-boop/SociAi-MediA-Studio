@@ -1,4 +1,5 @@
 
+
 export enum View {
   LANDING = 'LANDING',
   AUTH = 'AUTH',
@@ -51,6 +52,8 @@ export interface BrandProfile {
   brandVoice?: string;
   businessDescription?: string;
   valueProposition?: string;
+  // Added postIdeas to store AI-generated content suggestions from brand analysis
+  postIdeas?: string[];
 }
 
 export type PostStatus = 'draft' | 'needs_review' | 'approved' | 'scheduled' | 'published';
