@@ -8,7 +8,7 @@
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2103/2103633.png" />
     <title>SociAI MediA Studio | Professional AI Social Media Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Poppins:wght@300;400;600;800;900&display=swap" rel="stylesheet">
     <script>
       window.tailwind.config = {
         theme: {
@@ -34,8 +34,12 @@
             },
             keyframes: {
               glow: {
-                '0%': { 'text-shadow': '0 0 2px #fff, 0 0 4px #fff, 0 0 11px #34E0F7, 0 0 19px #34E0F7, 0 0 40px #34E0F7' },
-                '100%': { 'text-shadow': '0 0 2px #fff, 0 0 4px #fff, 0 0 11px #8C4DFF, 0 0 19px #8C4DFF, 0 0 40px #8C4DFF' }
+                '0%': { 
+                  'text-shadow': '0 0 5px #fff, 0 0 10px #fff, 0 0 20px #34E0F7, 0 0 40px #34E0F7' 
+                },
+                '100%': { 
+                  'text-shadow': '0 0 5px #fff, 0 0 10px #fff, 0 0 20px #8C4DFF, 0 0 40px #8C4DFF' 
+                }
               },
               slideUp: {
                 'from': { transform: 'translateY(100%)' },
@@ -79,8 +83,9 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #8C4DFF;
       }
-      .may-the-ai {
-        animation: glow 2s ease-in-out infinite alternate;
+      .chunky-text {
+        font-weight: 900;
+        letter-spacing: -0.05em;
       }
     </style>
   <script type="importmap">

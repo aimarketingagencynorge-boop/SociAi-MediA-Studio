@@ -20,12 +20,9 @@ import {
   LogOut, 
   Globe,
   BatteryCharging,
-  Cpu,
-  Crown,
-  Activity,
+  LogIn,
   CloudCheck,
-  CloudUpload,
-  LogIn
+  CloudUpload
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -103,7 +100,6 @@ const App: React.FC = () => {
     try {
       const initialPosts = await generateInitialStrategy(brandProfile, lang);
       setPosts(initialPosts);
-      
       const welcomeNote: Notification = {
         id: 'welcome_gift',
         type: 'insight',
@@ -113,11 +109,9 @@ const App: React.FC = () => {
         read: false
       };
       setNotifications([welcomeNote, ...notifications]);
-      
       setCurrentView(View.DASHBOARD);
     } catch (e) {
       console.error(e);
-      setPosts([]);
       setCurrentView(View.DASHBOARD);
     } finally {
       setIsLoading(false);
@@ -137,52 +131,6 @@ const App: React.FC = () => {
     localStorage.setItem('sociai_session', 'false');
   };
 
-  const handleFetchTrends = async () => {
-    const industry = profile?.industry || "Social Media Trends";
-    setIsScanningTrends(true);
-    try {
-      const newTrends = await fetchLatestTrends(industry, lang);
-      setNotifications(prev => [...newTrends, ...prev]);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsScanningTrends(false);
-    }
-  };
-
-  const markNotificationRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
-
-  const markAllNotificationsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
-
-  const updateCredits = (amount: number) => {
-    if (profile?.isAdmin) return; 
-    setCredits(prev => Math.max(0, prev + amount));
-  };
-
-  const handlePaymentSuccess = (addedCredits: number) => {
-    updateCredits(addedCredits);
-    setActivePaymentPlan(null);
-    const newNotification: Notification = {
-      id: Date.now().toString(),
-      type: 'system',
-      title: t.paymentSuccess,
-      message: `${t.creditsAdded} (+${addedCredits} ${t.credits})`,
-      timestamp: 'Just now',
-      read: false
-    };
-    setNotifications([newNotification, ...notifications]);
-  };
-
-  const CheckIcon = () => (
-    <div className="w-4 h-4 bg-cyber-turquoise/20 rounded-full flex items-center justify-center">
-        <div className="w-2 h-2 bg-cyber-turquoise rounded-full"></div>
-    </div>
-  );
-
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -197,31 +145,42 @@ const App: React.FC = () => {
     switch (currentView) {
       case View.LANDING:
         return (
-          <div className="flex flex-col items-center justify-center text-center space-y-4 py-8 px-4 min-h-[80vh]">
-            <div className="relative inline-block mb-4">
-                <div className="absolute -inset-4 bg-cyber-purple/5 blur-3xl rounded-full"></div>
-                <h1 className="text-3xl md:text-5xl font-futuristic font-black tracking-tighter leading-none relative text-white uppercase">
-                    SociAI MediA<br/> 
-                    <span className="bg-gradient-to-r from-cyber-turquoise via-cyber-magenta to-cyber-purple bg-clip-text text-transparent">STUDIO</span>
+          <div className="flex flex-col items-center justify-center text-center space-y-12 py-20 px-4 min-h-[85vh] relative">
+            {/* The signature violet glow/aura */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[380px] bg-cyber-purple/20 blur-[110px] rounded-full pointer-events-none"></div>
+            
+            <div className="relative z-10 flex flex-col items-center">
+                <h1 className="text-7xl md:text-8xl font-sans font-black tracking-tighter leading-[1.0] text-white">
+                    SociAI MediA
+                </h1>
+                <h1 className="text-8xl md:text-9xl font-sans font-black tracking-tighter leading-[0.8] bg-gradient-to-r from-cyber-turquoise to-cyber-purple bg-clip-text text-transparent uppercase mt-1">
+                    STUDIO
                 </h1>
             </div>
-            <p className="text-sm md:text-lg text-gray-400 max-w-lg mx-auto leading-relaxed">{t.heroSubtitle}</p>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto px-6 pt-4">
-              <button onClick={() => setCurrentView(View.ONBOARDING)} className="w-full sm:w-auto px-6 py-3 bg-cyber-purple text-white font-black text-base rounded-full hover:scale-105 transition shadow-lg shadow-cyber-purple/20 uppercase tracking-widest">
+
+            <p className="text-lg md:text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed relative z-10 font-medium tracking-tight">
+              {t.heroSubtitle}
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto px-6 pt-6 relative z-10">
+              <button 
+                onClick={() => setCurrentView(View.ONBOARDING)} 
+                className="w-full sm:w-auto px-14 py-5 bg-cyber-purple text-white font-black text-xl rounded-full hover:scale-105 transition shadow-2xl shadow-cyber-purple/50 uppercase tracking-widest"
+              >
                 {t.getStarted}
               </button>
               <button 
                 onClick={() => setCurrentView(View.AUTH)} 
-                className="w-full sm:w-auto px-6 py-3 border border-cyber-turquoise/20 hover:border-cyber-turquoise text-cyber-turquoise font-black text-base rounded-full transition uppercase tracking-widest flex items-center justify-center gap-2 bg-cyber-turquoise/5"
+                className="w-full sm:w-auto px-14 py-5 border-2 border-cyber-turquoise/40 hover:border-cyber-turquoise text-cyber-turquoise font-black text-xl rounded-full transition uppercase tracking-widest flex items-center justify-center gap-3 bg-cyber-dark/40 backdrop-blur-md"
               >
-                <LogIn size={16} /> {t.login}
+                <LogIn size={20} /> {t.login}
               </button>
             </div>
-            <div className="mt-12 text-center space-y-2">
-              <p className="text-lg md:text-2xl font-futuristic font-bold uppercase tracking-[0.3em] may-the-ai text-white">
-                May the AI be with You+
+
+            <div className="pt-20 relative z-10 opacity-30">
+              <p className="text-[10px] text-gray-400 uppercase font-black tracking-[0.5em]">
+                POWERED BY USETHEFORCE.AI & GEMINI
               </p>
-              <p className="text-[8px] text-gray-600 uppercase font-black tracking-[0.4em] opacity-30">usetheforce.ai</p>
             </div>
           </div>
         );
@@ -237,7 +196,7 @@ const App: React.FC = () => {
                 posts={posts} 
                 profile={profile} 
                 lang={lang} 
-                onUpdateCredits={updateCredits} 
+                onUpdateCredits={(amt) => setCredits(c => Math.max(0, c + amt))} 
                 onUpdatePosts={setPosts}
             />
         ) : <div>Complete Profile Setup</div>;
@@ -257,60 +216,17 @@ const App: React.FC = () => {
           />
         ) : <div>Complete Profile Setup</div>;
       case View.SUBSCRIPTIONS:
-        const plans = [
-          { key: 'starter', label: t.starter, price: '29', credits: 100, features: t.features.starter, icon: <Activity size={24} className="text-gray-400" /> },
-          { key: 'pro', label: t.pro, price: '89', credits: 1000, features: t.features.pro, icon: <Cpu size={24} className="text-cyber-purple" />, highlight: true },
-          { key: 'agency', label: t.agency, price: '299', credits: 5000, features: t.features.agency, icon: <Crown size={24} className="text-cyber-turquoise" /> },
-        ];
         return (
           <div className="py-12 animate-fadeIn max-w-6xl mx-auto space-y-20 px-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-futuristic font-bold text-center mb-4 uppercase tracking-tighter">{t.pricingTitle}</h1>
-              <p className="text-center text-gray-500 mb-16 uppercase text-[10px] tracking-[0.3em]">Scalable power for every creator</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end">
-                {plans.map(plan => (
-                  <div 
-                    key={plan.key} 
-                    className={`glass-card p-8 rounded-3xl relative transition-all duration-500 ${plan.highlight ? 'scale-105 border-cyber-purple/50 bg-cyber-purple/5 z-10' : 'opacity-80 hover:opacity-100'}`}
-                  >
-                    {plan.highlight && (
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-cyber-purple px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-[0_0_15px_#8C4DFF]">
-                          Most Popular
-                      </div>
-                    )}
-                    
-                    <div className="text-center">
-                      <div className="mb-6 flex justify-center">{plan.icon}</div>
-                      <h3 className="text-2xl font-bold mb-4 uppercase tracking-wider">{plan.label}</h3>
-                      <div className="flex items-baseline justify-center gap-1 mb-8">
-                        <span className="text-4xl font-black">${plan.price}</span>
-                        <span className="text-sm text-gray-500 uppercase font-bold tracking-widest">{t.perMonth}</span>
-                      </div>
-                      
-                      <div className="space-y-4 mb-10 text-left border-t border-white/5 pt-8">
-                        {plan.features.map((f, idx) => (
-                          <div key={idx} className="flex items-center gap-3 text-sm text-gray-300">
-                            <CheckIcon /> 
-                            <span className={idx === 0 ? "font-bold text-white" : ""}>{f}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <button 
-                        onClick={() => setActivePaymentPlan(plan)}
-                        className={`w-full py-4 rounded-xl font-bold transition-all duration-300 uppercase tracking-widest text-xs ${
-                        plan.highlight 
-                          ? 'bg-gradient-to-r from-cyber-purple to-cyber-magenta text-white hover:shadow-[0_0_20px_rgba(140,77,255,0.4)]' 
-                          : 'bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white'
-                      }`}>
-                        {t.selectPlan}
-                      </button>
-                    </div>
-                  </div>
+             <h1 className="text-4xl md:text-5xl font-futuristic font-black text-center uppercase tracking-tighter">{t.pricingTitle}</h1>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {['starter', 'pro', 'agency'].map(plan => (
+                   <div key={plan} className="glass-card p-10 rounded-3xl border border-white/5 text-center space-y-6">
+                      <h3 className="text-3xl font-black uppercase tracking-widest">{(t as any)[plan]}</h3>
+                      <button onClick={() => setActivePaymentPlan({key: plan, label: (t as any)[plan], price: '99', credits: 1000})} className="w-full py-4 bg-cyber-purple rounded-xl font-bold uppercase">{t.selectPlan}</button>
+                   </div>
                 ))}
-              </div>
-            </div>
+             </div>
           </div>
         );
       default:
@@ -321,135 +237,74 @@ const App: React.FC = () => {
   const showSidebar = isLoggedIn && [View.DASHBOARD, View.PLANNER, View.ACADEMY, View.CRM, View.SUBSCRIPTIONS, View.DOCKING_BAY, View.SETTINGS].includes(currentView);
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row font-sans bg-cyber-dark">
+    <div className="min-h-screen flex flex-col md:flex-row font-sans bg-cyber-dark text-white">
       {activePaymentPlan && (
         <PaymentModal 
           plan={activePaymentPlan} 
           lang={lang} 
           onClose={() => setActivePaymentPlan(null)} 
-          onSuccess={handlePaymentSuccess} 
+          onSuccess={(amt) => { setCredits(c => c + amt); setActivePaymentPlan(null); }} 
         />
       )}
 
       {showSidebar && (
         <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} border-r border-white/5 bg-cyber-dark transition-all duration-300 hidden md:flex flex-col fixed h-full z-50`}>
           <div className="p-6 flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-cyber-purple to-cyber-magenta rounded-lg flex items-center justify-center shadow-[0_0_15px_#8C4DFF]"><Zap size={18} /></div>
-            {isSidebarOpen && <span className="font-futuristic font-bold text-lg tracking-widest text-white">SociAI</span>}
+            <div className="w-10 h-10 bg-gradient-to-br from-cyber-purple to-cyber-magenta rounded-xl flex items-center justify-center shadow-[0_0_20px_#8C4DFF]"><Zap size={20} /></div>
+            {isSidebarOpen && <span className="font-futuristic font-black text-xl tracking-tighter text-white">SociAI</span>}
           </div>
           <nav className="flex-1 px-4 py-8 space-y-2">
             {getNavigation(lang).map(item => (
-              <button key={item.id} onClick={() => { setCurrentView(item.id as View); setIsNotificationsOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition ${currentView === item.id ? 'bg-cyber-purple/20 text-cyber-purple border border-cyber-purple/20 shadow-[0_0_15px_rgba(140,77,255,0.1)]' : 'text-gray-400 hover:bg-white/5'}`}>
-                {item.icon} {isSidebarOpen && <span className="font-medium">{item.label}</span>}
+              <button key={item.id} onClick={() => { setCurrentView(item.id as View); setIsNotificationsOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition ${currentView === item.id ? 'bg-cyber-purple/20 text-cyber-purple border border-cyber-purple/20' : 'text-gray-400 hover:bg-white/5'}`}>
+                {item.icon} {isSidebarOpen && <span className="font-bold">{item.label}</span>}
               </button>
             ))}
           </nav>
           <div className="p-4 mt-auto">
-            <button 
-              onClick={handleLogout}
-              className="w-full flex items-center gap-4 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition"
-            >
-                <LogOut size={20} /> {isSidebarOpen && <span className="font-medium">{t.logout}</span>}
+            <button onClick={handleLogout} className="w-full flex items-center gap-4 px-4 py-3 text-red-500 hover:bg-red-500/10 rounded-xl transition">
+                <LogOut size={20} /> {isSidebarOpen && <span className="font-bold">{t.logout}</span>}
             </button>
           </div>
         </aside>
       )}
 
       <main className={`flex-1 transition-all duration-300 relative ${showSidebar ? (isSidebarOpen ? 'md:ml-64' : 'md:ml-20') : ''} mb-20 md:mb-0`}>
-        <header className="sticky top-0 z-40 bg-cyber-dark/80 backdrop-blur-md border-b border-white/5 h-16 flex items-center justify-between px-4 md:px-8">
-          <div className="flex items-center gap-4">
+        <header className="sticky top-0 z-40 bg-cyber-dark/80 backdrop-blur-md border-b border-white/5 h-16 flex items-center justify-between px-8">
+           <div className="flex items-center gap-6">
              {showSidebar && (
-               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition hidden md:block">
-                 {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400">
+                 {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
                </button>
              )}
-             
-             {isLoggedIn && (
-                 <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 group cursor-help" title={t.syncCloud}>
-                    {isSyncing ? (
-                        <CloudUpload size={14} className="text-cyber-turquoise animate-bounce" />
-                    ) : (
-                        <CloudCheck size={14} className="text-green-400" />
-                    )}
-                 </div>
+             {isLoggedIn && profile && (
+               <div className="flex items-center gap-3 bg-cyber-purple/10 border border-cyber-purple/20 px-4 py-1 rounded-full">
+                 <BatteryCharging size={16} className="text-cyber-purple" />
+                 <span className="text-cyber-purple font-black text-sm uppercase">{profile.isAdmin ? 'Unlimited' : credits}</span>
+               </div>
              )}
-
-             {profile && isLoggedIn && (
-              <div className="flex items-center gap-4 text-sm">
-                 <div className="flex items-center gap-2 bg-cyber-purple/10 px-3 py-1 rounded-full border border-cyber-purple/20">
-                    <BatteryCharging size={14} className="text-cyber-purple" />
-                    {profile.isAdmin ? (
-                        <span className="text-cyber-turquoise font-black text-[10px] uppercase tracking-widest">Unlimited</span>
-                    ) : (
-                        <span className="text-cyber-purple font-bold text-xs md:text-sm">{credits}</span>
-                    )}
-                 </div>
-              </div>
-             )}
-          </div>
-          <div className="flex items-center gap-4 relative">
+           </div>
+           
+           <div className="flex items-center gap-6">
               <div className="flex items-center bg-white/5 rounded-full px-2 py-1 border border-white/10">
-                <Globe size={14} className="text-cyber-turquoise mr-2" />
                 {(['pl', 'en'] as const).map((l) => (
-                  <button 
-                    key={l} 
-                    onClick={() => setLang(l)}
-                    className={`px-2 py-0.5 text-[10px] font-bold rounded-full transition ${lang === l ? 'bg-cyber-purple text-white shadow-lg shadow-cyber-purple/40' : 'text-gray-500 hover:text-white'}`}
-                  >
+                  <button key={l} onClick={() => setLang(l)} className={`px-3 py-1 text-[10px] font-black rounded-full transition ${lang === l ? 'bg-cyber-purple text-white' : 'text-gray-500'}`}>
                     {l.toUpperCase()}
                   </button>
                 ))}
               </div>
-              
               {isLoggedIn && (
-                <div className="relative">
-                  <button 
-                    onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                    className={`relative p-2 rounded-lg transition ${isNotificationsOpen ? 'bg-cyber-purple/20 text-cyber-purple' : 'text-gray-400 hover:bg-white/5'}`}
-                  >
-                    <Bell size={20} />
-                    {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 w-4 h-4 bg-cyber-magenta rounded-full text-[9px] font-black text-white flex items-center justify-center border border-cyber-dark">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </button>
-                  
-                  {isNotificationsOpen && (
-                    <NotificationCenter 
-                      notifications={notifications}
-                      lang={lang}
-                      isScanning={isScanningTrends}
-                      onMarkRead={markNotificationRead}
-                      onMarkAllRead={markAllNotificationsRead}
-                      onScanTrends={handleFetchTrends}
-                      onClose={() => setIsNotificationsOpen(false)}
-                    />
-                  )}
-                </div>
+                <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className="relative p-2 text-gray-400 hover:text-white transition">
+                   <Bell size={22} />
+                   {unreadCount > 0 && <span className="absolute top-1 right-1 w-4 h-4 bg-cyber-magenta rounded-full text-[9px] font-black flex items-center justify-center">{unreadCount}</span>}
+                </button>
               )}
-          </div>
+           </div>
         </header>
 
-        <div className={`p-4 md:p-8 max-w-7xl mx-auto overflow-y-auto min-h-screen`}>
+        <div className="p-4 md:p-8 max-w-7xl mx-auto min-h-screen">
           {renderContent()}
         </div>
       </main>
-
-      {showSidebar && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-cyber-dark/90 backdrop-blur-xl border-t border-white/10 flex items-center justify-around px-2 z-[60] shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
-           {getNavigation(lang).slice(0, 5).map(item => (
-              <button 
-                key={item.id} 
-                onClick={() => { setCurrentView(item.id as View); setIsNotificationsOpen(false); }}
-                className={`flex flex-col items-center justify-center transition-all ${currentView === item.id ? 'text-cyber-purple scale-110' : 'text-gray-500'}`}
-              >
-                 {item.icon}
-                 <span className="text-[8px] font-black uppercase mt-1 tracking-widest">{item.label.split(' ')[0]}</span>
-              </button>
-           ))}
-        </nav>
-      )}
     </div>
   );
 };
