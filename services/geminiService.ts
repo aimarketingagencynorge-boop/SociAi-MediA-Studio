@@ -1,28 +1,14 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { BrandProfile, SocialPost, ContentFormat, Notification } from "../types";
+import { BrandProfile, SocialPost, ContentFormat, Notification, ImageGenMode } from "../types";
 import { Language } from "../translations";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-/**
- * Skanowanie Holonet - zaawansowana analiza marki.
- */
 export const analyzeBrandIdentity = async (name: string, website?: string): Promise<Partial<BrandProfile>> => {
-  const startTime = Date.now();
-  console.group("%c[SociAI Diagnostic] Holonet Scan", "color: #34E0F7; font-weight: bold;");
-  
   const ai = getAI();
   const searchPrompt = `As a JedAi Master of Digital Analysis, perform a deep Holonet Scan for the brand "${name}" ${website ? `at ${website}` : ''}.
-  
-  EXTRACT & GENERATE:
-  1. Visual Identity: Find the primary brand HEX color and secondary accent.
-  2. Logo: Locate high-res logo URL.
-  3. Brand Voice: Specific communication style.
-  4. Post Sparks: 10 creative post ideas.
-  5. Core Info: Target audience, business description, and value proposition.
-
-  Return ONLY JSON.`;
+  EXTRACT & GENERATE: 1. Visual Identity (HEX), 2. Logo, 3. Brand Voice, 4. Post Sparks, 5. Core Info. Return ONLY JSON.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -48,19 +34,10 @@ export const analyzeBrandIdentity = async (name: string, website?: string): Prom
         }
       }
     });
-
     const data = JSON.parse(response.text || "{}");
-    console.groupEnd();
     return { ...data, autoAppendSignature: true };
   } catch (e) {
-    console.groupEnd();
-    return { 
-      primaryColor: '#8C4DFF', 
-      tone: 'professional', 
-      targetAudience: 'General Audience',
-      autoAppendSignature: true,
-      postIdeas: ["Wprowadzenie marki", "Nasza misja"]
-    };
+    return { primaryColor: '#8C4DFF', tone: 'professional', targetAudience: 'General Audience', autoAppendSignature: true, postIdeas: ["Wprowadzenie marki"] };
   }
 };
 
@@ -75,8 +52,7 @@ export const getFormattedSignature = (profile: BrandProfile): string => {
 
 export const generateInitialStrategy = async (profile: BrandProfile, lang: Language): Promise<SocialPost[]> => {
   const ai = getAI();
-  const prompt = `Generate 3 high-impact social media transmissions for "${profile.name}". Language: ${lang}. Return JSON array. Use their brand voice: ${profile.brandVoice || 'Professional'}.`;
-
+  const prompt = `Generate 3 high-impact social media transmissions for "${profile.name}". Language: ${lang}. Return JSON array.`;
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt,
@@ -100,7 +76,6 @@ export const generateInitialStrategy = async (profile: BrandProfile, lang: Langu
       }
     }
   });
-
   try { return JSON.parse(response.text || "[]"); } catch { return []; }
 };
 
@@ -108,7 +83,6 @@ export const generateWeeklyStrategy = async (profile: BrandProfile, lang: Langua
   const ai = getAI();
   const formatsStr = formats.map(f => `${f.name}: ${f.keyword}`).join(', ');
   const prompt = `Generate a weekly mission map for "${profile.name}". Tone: ${profile.tone}. Formats: ${formatsStr}. Return JSON array.`;
-
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt,
@@ -133,41 +107,35 @@ export const generateWeeklyStrategy = async (profile: BrandProfile, lang: Langua
       }
     }
   });
-
   try { return JSON.parse(response.text || "[]"); } catch { return []; }
 };
 
 /**
- * ZAAWANSOWANY PIPELINE GENEROWANIA OBRAZÓW (ETAP A + ETAP B)
+ * ZAAWANSOWANY PIPELINE GENEROWANIA OBRAZÓW
+ * Wersja 2.0: PHOTO vs POSTER, No Text Policy, Regenerate Seed
  */
-export const generateAIImage = async (postContent: string, profile: BrandProfile, platform: string = 'instagram'): Promise<{url: string, brief: any, prompt: string}> => {
+export const generateAIImage = async (
+  postContent: string, 
+  profile: BrandProfile, 
+  platform: string = 'instagram',
+  mode: ImageGenMode = 'PHOTO',
+  variantSeed: number = 0
+): Promise<{url: string, brief: any, prompt: string, negative: string}> => {
     const ai = getAI();
     
-    // ETAP A: GENEROWANIE CREATIVE BRIEFU
-    const briefPrompt = `You are a world-class JedAi Creative Director. 
-    Analyze the Brand Context and Post Content to create a structured Creative Brief for an image.
+    // ETAP A: CREATIVE BRIEF
+    const briefPrompt = `You are a Creative Director. Create a JSON brief for an image.
+    MODE: ${mode} (PHOTO means realistic lifestyle/product photo, POSTER means background for text).
+    BRAND: ${profile.name} (${profile.industry}). Voice: ${profile.brandVoice || profile.tone}. 
+    USPs: ${profile.valueProposition}. Colors: ${profile.primaryColor}.
+    POST: "${postContent}"
+    VARIANT_SEED: ${variantSeed} (Add slight variation if > 0).
     
-    BRAND CONTEXT:
-    - Name: ${profile.name}
-    - Industry: ${profile.industry}
-    - Voice: ${profile.brandVoice || profile.tone}
-    - Mission: ${profile.businessDescription || 'Standard business operations'}
-    - USPs: ${profile.valueProposition || 'Premium quality and reliability'}
-    - Brand Kit Colors: ${profile.primaryColor}, ${profile.secondaryColor || 'Neutral'}
-    - Reference Style: ${profile.industry} aesthetic, modern, futuristic.
-    
-    POST CONTENT:
-    "${postContent}"
-    
-    PLATFORM: ${platform}
-
-    RULES:
-    1. Focus on visual storytelling, NOT copying post text.
-    2. Favor photorealistic, premium, or specific artistic styles consistent with the industry.
-    3. Primary Colors should influence the lighting, mood, or accents.
-    4. NO long paragraphs on the image.
-    
-    Return ONLY a JSON object following the required schema.`;
+    RULES: 
+    1. NO TEXT on image.
+    2. Focus on ${profile.industry} aesthetics. 
+    3. If industry is food/gastro, use appetizing food photography style.
+    4. PHOTO mode must be photorealistic. POSTER mode must be a clean composition.`;
 
     const briefResponse = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
@@ -177,40 +145,30 @@ export const generateAIImage = async (postContent: string, profile: BrandProfile
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            brand_summary: { type: Type.STRING },
-            target_audience: { type: Type.STRING },
-            goal: { type: Type.STRING },
-            platform: { type: Type.STRING },
             main_subject: { type: Type.STRING },
-            keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
             visual_style: { type: Type.STRING },
             mood: { type: Type.STRING },
             color_direction: { type: Type.ARRAY, items: { type: Type.STRING } },
             composition: { type: Type.STRING },
-            text_policy: {
-              type: Type.OBJECT,
-              properties: {
-                allow_text: { type: Type.BOOLEAN },
-                overlay_text: { type: Type.STRING }
-              }
-            }
+            keywords: { type: Type.ARRAY, items: { type: Type.STRING } }
           },
-          required: ["main_subject", "visual_style", "mood", "color_direction", "text_policy"]
+          required: ["main_subject", "visual_style", "mood", "color_direction"]
         }
       }
     });
 
     const brief = JSON.parse(briefResponse.text || "{}");
 
-    // ETAP B: SYNTEZA FINALNEGO PROMPTU I GENEROWANIE OBRAZU
-    const finalImagePrompt = `A ${brief.visual_style} image of ${brief.main_subject}. 
+    // ETAP B: SYNTEZA PROMPTU
+    const stylePrefix = mode === 'PHOTO' ? "A photorealistic, premium lifestyle/product photography image of" : "A clean, artistic background composition of";
+    const finalImagePrompt = `${stylePrefix} ${brief.main_subject}. 
     Mood: ${brief.mood}. Composition: ${brief.composition}. 
-    Lighting and accents in ${brief.color_direction.join(' and ')}. 
-    Aesthetic keywords: ${brief.keywords.join(', ')}. 
-    Highly detailed, premium quality, 8k resolution. 
-    Consistent with ${profile.name}'s ${profile.brandVoice} brand voice.`;
+    Lighting/Palette: ${brief.color_direction.join(' and ')}. 
+    Style: ${brief.visual_style}. 
+    Details: ${brief.keywords?.join(', ')}. 
+    Variant adjustment: ${variantSeed}. Highly detailed, 8k, professional grade.`;
 
-    const negativePrompt = "no gibberish text, no random letters, no paragraphs, no watermark, no UI elements, no poster frame full of text, no distorted typography, no misspelled words, no logo made of text";
+    const negativePrompt = "no text, no letters, no typography, no paragraphs, no gibberish, no watermark, no logo text, no UI, no futuristic HUD, no poster layout, no signage, no distorted words, no random alphabets";
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
@@ -230,35 +188,23 @@ export const generateAIImage = async (postContent: string, profile: BrandProfile
       }
     }
 
-    if (!imageUrl) throw new Error("Force link broken: Failed to generate image");
+    if (!imageUrl) throw new Error("Image generation failed");
 
-    return {
-      url: imageUrl,
-      brief: brief,
-      prompt: finalImagePrompt
-    };
+    return { url: imageUrl, brief, prompt: finalImagePrompt, negative: negativePrompt };
 };
 
 export const generateAIVideo = async (prompt: string): Promise<string> => {
   const ai = getAI();
   let operation = await ai.models.generateVideos({
     model: 'veo-3.1-fast-generate-preview',
-    prompt: `Epic JedAi cinematic video: ${prompt}`,
-    config: {
-      numberOfVideos: 1,
-      resolution: '720p',
-      aspectRatio: '16:9'
-    }
+    prompt: `Epic cinematic video: ${prompt}`,
+    config: { numberOfVideos: 1, resolution: '720p', aspectRatio: '16:9' }
   });
-
   while (!operation.done) {
     await new Promise(resolve => setTimeout(resolve, 10000));
     operation = await ai.operations.getVideosOperation({ operation: operation });
   }
-
   const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-  if (!downloadLink) throw new Error("Video generation failed - no URI");
-
   const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
   const blob = await response.blob();
   return URL.createObjectURL(blob);
@@ -266,21 +212,14 @@ export const generateAIVideo = async (prompt: string): Promise<string> => {
 
 export const fetchLatestTrends = async (industry: string, lang: Language): Promise<Notification[]> => {
   const ai = getAI();
-  const prompt = `Latest viral Force Sparks (trends) for ${industry} as of today. lang: ${lang}`;
-
+  const prompt = `Latest viral trends for ${industry} as of today. lang: ${lang}`;
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt,
-    config: {
-      tools: [{ googleSearch: {} }],
-      responseMimeType: "application/json"
-    }
+    config: { tools: [{ googleSearch: {} }], responseMimeType: "application/json" }
   });
-
   try {
     const data = JSON.parse(response.text || "[]");
     return data.map((item: any) => ({ ...item, id: Math.random().toString(), timestamp: 'Now', read: false }));
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 };

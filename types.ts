@@ -47,16 +47,15 @@ export interface BrandProfile {
   analysisSummary?: string;
   autoAppendSignature: boolean;
   isAdmin?: boolean;
-  // New knowledge base fields
   brandVoice?: string;
   businessDescription?: string;
   valueProposition?: string;
-  // Added postIdeas to store AI-generated content suggestions from brand analysis
   postIdeas?: string[];
 }
 
 export type PostStatus = 'draft' | 'needs_review' | 'approved' | 'scheduled' | 'published';
 export type MediaSource = 'ai_generated' | 'client_upload';
+export type ImageGenMode = 'PHOTO' | 'POSTER';
 
 export interface ContentFormat {
   id: string;
@@ -77,9 +76,12 @@ export interface SocialPost {
   status: PostStatus;
   mediaSource: MediaSource;
   format?: string; 
-  // Fields for AI Image Pipeline traceability
   creativeBrief?: any;
   aiPrompt?: string;
+  aiNegativePrompt?: string;
+  aiMode?: ImageGenMode;
+  imageHistory?: string[];
+  variantCount?: number;
 }
 
 export interface AnalyticsData {
