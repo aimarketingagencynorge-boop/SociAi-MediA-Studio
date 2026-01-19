@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef } from 'react';
 import { NeonCard } from './NeonCard';
 import { BrandProfile, SocialPost, PostStatus, MediaSource, ContentFormat, ImageGenMode } from '../types';
@@ -48,37 +47,22 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
 
   const handleRegenerateImage = async (post: SocialPost) => {
     if (regeneratingPostIds.has(post.id)) return;
-    
     setRegeneratingPostIds(prev => new Set(prev).add(post.id));
     onUpdateCredits(-5);
-
     try {
         const nextSeed = (post.variantCount || 0) + 1;
-        const result = await generateAIImage(
-            post.content, 
-            profile, 
-            post.platform, 
-            post.aiMode || 'PHOTO',
-            nextSeed
-        );
-
+        const result = await generateAIImage(post.content, profile, post.platform, post.aiMode || 'PHOTO', nextSeed);
         onUpdatePosts(posts.map(p => p.id === post.id ? {
             ...p,
             imageUrl: result.url,
-            imageHistory: [...(p.imageHistory || [p.imageUrl]).filter(Boolean), result.url] as string[],
+            imageHistory: [...new Set([...(p.imageHistory || []), result.url])],
             variantCount: nextSeed,
             creativeBrief: result.brief,
             aiPrompt: result.prompt,
             aiDebug: result.debug
         } : p));
-    } catch (e) {
-        console.error("Regeneration failed", e);
-    } finally {
-        setRegeneratingPostIds(prev => {
-            const next = new Set(prev);
-            next.delete(post.id);
-            return next;
-        });
+    } catch (e) { console.error("Regeneration failed", e); } finally {
+        setRegeneratingPostIds(prev => { const next = new Set(prev); next.delete(post.id); return next; });
     }
   };
 
@@ -87,10 +71,8 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
         if (p.id === postId && p.imageHistory && p.imageHistory.length > 1) {
             const currentIndex = p.imageHistory.indexOf(p.imageUrl || '');
             let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
-            
             if (nextIndex >= p.imageHistory.length) nextIndex = 0;
             if (nextIndex < 0) nextIndex = p.imageHistory.length - 1;
-            
             return { ...p, imageUrl: p.imageHistory[nextIndex] };
         }
         return p;
@@ -133,7 +115,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                 creativeBrief: brief || p.creativeBrief,
                 aiPrompt: aiPrompt || p.aiPrompt,
                 aiMode: mode || p.aiMode,
-                imageHistory: genModal.type === 'image' ? [...(p.imageHistory || [p.imageUrl]).filter(Boolean), url] : p.imageHistory,
+                imageHistory: genModal.type === 'image' ? [...new Set([...(p.imageHistory || []), url])] : p.imageHistory,
                 variantCount: (p.variantCount || 0) + 1,
                 aiDebug: aiDebug || p.aiDebug
               } : p));
@@ -224,25 +206,9 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 z-40">
                                                 <button onClick={() => handleSwitchVariant(post.id, 'prev')} className="text-gray-400 hover:text-white transition"><ChevronLeft size={16}/></button>
                                                 <span className="text-[10px] font-black text-white whitespace-nowrap">
-                                                    {/* Fixed: Use 'post' instead of 'p' to correctly reference the current post being iterated */}
-                                                    {(post.imageHistory?.indexOf(post.imageUrl || '') + 1) || 1} / {post.imageHistory?.length || 1}
+                                                    {(post.imageHistory.indexOf(post.imageUrl || '') + 1)} / {post.imageHistory.length}
                                                 </span>
                                                 <button onClick={() => handleSwitchVariant(post.id, 'next')} className="text-gray-400 hover:text-white transition"><ChevronRight size={16}/></button>
-                                            </div>
-                                        )}
-
-                                        {post.aiDebug && (
-                                            <div className="absolute top-3 left-3 flex gap-1 z-40">
-                                                {post.aiDebug.usedReferenceImages && (
-                                                    <div className="bg-green-500/80 p-1 rounded-lg text-white" title="Used Ref Style Assets">
-                                                        <Shield size={10} />
-                                                    </div>
-                                                )}
-                                                {post.aiDebug.missingFields && post.aiDebug.missingFields.length > 0 && (
-                                                    <div className="bg-yellow-500/80 p-1 rounded-lg text-white" title={`Missing context: ${post.aiDebug.missingFields.join(', ')}`}>
-                                                        <Info size={10} />
-                                                    </div>
-                                                )}
                                             </div>
                                         )}
                                     </div>

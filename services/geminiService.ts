@@ -63,30 +63,37 @@ export const getFormattedSignature = (profile: BrandProfile): string => {
 export const generateInitialStrategy = async (profile: BrandProfile, lang: Language): Promise<SocialPost[]> => {
   const ai = getAI();
   const prompt = `Generate 3 high-impact social media transmissions for "${profile.name}". Language: ${lang}. Return JSON array.`;
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            id: { type: Type.STRING },
-            platform: { type: Type.STRING, enum: ['instagram', 'facebook', 'linkedin', 'tiktok'] },
-            date: { type: Type.STRING },
-            content: { type: Type.STRING },
-            hashtags: { type: Type.ARRAY, items: { type: Type.STRING } },
-            status: { type: Type.STRING, enum: ['draft', 'needs_review', 'approved'] },
-            mediaSource: { type: Type.STRING, enum: ['ai_generated', 'client_upload'] }
-          },
-          required: ["id", "platform", "date", "content", "hashtags", "status", "mediaSource"]
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              id: { type: Type.STRING },
+              platform: { type: Type.STRING, enum: ['instagram', 'facebook', 'linkedin', 'tiktok'] },
+              date: { type: Type.STRING },
+              content: { type: Type.STRING },
+              hashtags: { type: Type.ARRAY, items: { type: Type.STRING } },
+              status: { type: Type.STRING, enum: ['draft', 'needs_review', 'approved'] },
+              mediaSource: { type: Type.STRING, enum: ['ai_generated', 'client_upload'] }
+            },
+            required: ["id", "platform", "date", "content", "hashtags", "status", "mediaSource"]
+          }
         }
       }
-    }
-  });
-  try { return JSON.parse(response.text || "[]"); } catch { return []; }
+    });
+    return JSON.parse(response.text || "[]");
+  } catch (e) {
+    // Fallback strategy if API fails
+    return [
+      { id: 'f1', platform: 'instagram', date: new Date().toISOString().split('T')[0], content: `Witajcie w ${profile.name}! Jesteśmy gotowi na nowe wyzwania.`, hashtags: ['nowość', profile.name.toLowerCase()], status: 'draft', mediaSource: 'ai_generated' }
+    ];
+  }
 };
 
 export const generateWeeklyStrategy = async (profile: BrandProfile, lang: Language, formats: ContentFormat[]): Promise<SocialPost[]> => {
@@ -134,7 +141,6 @@ export const generateAIImage = async (
     if (!profile.businessDescription) missingFields.push('businessDescription');
     if (!profile.valueProposition) missingFields.push('valueProposition');
     
-    // ETAP 1: CREATIVE BRIEF (Gemini 3 Pro)
     const briefPrompt = `As a Creative Director, analyze brand context and create a visual brief for an image.
     BRAND: ${profile.name}, Industry: ${profile.industry}, Voice: ${profile.brandVoice || 'N/A'}. 
     CONTEXT: ${profile.businessDescription || 'N/A'}. USPs: ${profile.valueProposition || 'N/A'}.
@@ -147,7 +153,7 @@ export const generateAIImage = async (
     1. Define main subject (no text on image).
     2. Balanced 5-color hex palette (3 primary, 1 accent, 1 neutral).
     3. Industry-specific style (e.g. food photography for restaurants).
-    4. NO futuristic HUD or neon grids unless requested.
+    4. NO futuristic HUD or neon grids.
     5. No monochrome red.
     Return ONLY JSON.`;
 
@@ -171,29 +177,20 @@ export const generateAIImage = async (
     const brief = JSON.parse(briefResponse.text || "{}");
     const paletteStr = brief.palette?.join(', ') || profile.primaryColor;
 
-    // ETAP 2: RENDERING (Gemini 2.5 Flash Image)
     const contentParts: any[] = [];
-    
-    // Style conditioning
-    if (profile.styleReferenceUrls && profile.styleReferenceUrls.length > 0) {
-      profile.styleReferenceUrls.slice(0, 3).forEach(url => {
-        contentParts.push(prepareImagePart(url));
-      });
+    if (profile.styleReferenceUrls?.length) {
+      profile.styleReferenceUrls.slice(0, 3).forEach(url => contentParts.push(prepareImagePart(url)));
     }
-    
-    // Brand conditioning (logo)
-    if (profile.logoUrl) {
-      contentParts.push(prepareImagePart(profile.logoUrl));
-    }
+    if (profile.logoUrl) contentParts.push(prepareImagePart(profile.logoUrl));
 
     const finalImagePrompt = `${mode === 'PHOTO' ? 'Professional commercial photography' : 'Modern high-end graphic design'} of ${brief.main_subject}.
     STYLE: ${brief.visual_style}. MOOD: ${brief.mood}.
     COLORS: Use a balanced palette of ${paletteStr}. Avoid monochrome.
-    CONTEXT: This is for ${profile.name} operating in ${profile.industry}.
-    ${editInstruction ? `SPECIFIC ADJUSTMENT: ${editInstruction}.` : ''}
-    IMPORTANT: NO TEXT, NO LOGO TEXT, NO FUTURISTIC HUD, NO SCI-FI TEMPLATES.`;
+    CONTEXT: For ${profile.name} in ${profile.industry}.
+    ${editInstruction ? `ADJUSTMENT: ${editInstruction}.` : ''}
+    NO TEXT, NO LOGO TEXT, NO HUD, NO SCI-FI TEMPLATES.`;
 
-    const negativePrompt = "text, letters, words, watermark, logo text, futuristic hud, sci-fi interface, red monochrome, neon grid, poster template, gibberish, low quality, distorted, Paragraphs, UI elements";
+    const negativePrompt = "text, letters, words, watermark, logo text, futuristic hud, sci-fi interface, red monochrome, neon grid, poster template, UI, buttons, menu, gibberish";
 
     contentParts.push({ text: `${finalImagePrompt}. NEGATIVE: ${negativePrompt}` });
 
@@ -214,35 +211,37 @@ export const generateAIImage = async (
         break;
       }
     }
-
     if (!imageUrl) throw new Error("Image generation failed.");
 
     return { 
-      url: imageUrl, 
-      brief, 
-      prompt: finalImagePrompt, 
-      negative: negativePrompt,
-      debug: {
-        brandContextSnapshot: JSON.stringify({ industry: profile.industry, tone: profile.tone }),
-        missingFields,
-        paletteUsed: brief.palette || [],
-        usedReferenceImages: !!(profile.styleReferenceUrls && profile.styleReferenceUrls.length > 0),
-        briefJson: brief
-      }
+      url: imageUrl, brief, prompt: finalImagePrompt, negative: negativePrompt,
+      debug: { missingFields, paletteUsed: brief.palette, usedReferenceImages: !!profile.styleReferenceUrls?.length }
     };
 };
 
-export const generateAIVideo = async (prompt: string, editInstruction: string = ''): Promise<string> => {
+export const generateAIVideo = async (prompt: string, profile: BrandProfile, editInstruction: string = ''): Promise<{url: string, debug: any}> => {
   const ai = getAI();
-  // Using Veo for cinematic quality video
+  
+  // ETAP 1: Creative Brief for Video
+  const videoBriefPrompt = `Create a cinematic video brief for: "${prompt}". 
+  Brand: ${profile.name}, Industry: ${profile.industry}. 
+  Colors: ${profile.primaryColor}. Mood: Cinematic and professional. No text.
+  ${editInstruction ? `Edit instructions: ${editInstruction}` : ''}
+  Return ONLY JSON with "main_action", "setting", "mood".`;
+
+  const briefResponse = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: videoBriefPrompt,
+    config: { responseMimeType: "application/json" }
+  });
+  const brief = JSON.parse(briefResponse.text || "{}");
+
+  const finalVideoPrompt = `Cinematic video: ${brief.main_action} in ${brief.setting}. ${brief.mood} atmosphere. Realistic lighting, high quality. No text, no sci-fi overlays.`;
+
   let operation = await ai.models.generateVideos({
     model: 'veo-3.1-fast-generate-preview',
-    prompt: `Professional cinematic video of ${prompt}. ${editInstruction ? `Change request: ${editInstruction}` : ''} High quality, realistic lighting, no text, no sci-fi overlays.`,
-    config: {
-      numberOfVideos: 1,
-      resolution: '720p',
-      aspectRatio: '16:9'
-    }
+    prompt: finalVideoPrompt,
+    config: { numberOfVideos: 1, resolution: '720p', aspectRatio: '16:9' }
   });
 
   while (!operation.done) {
@@ -253,29 +252,23 @@ export const generateAIVideo = async (prompt: string, editInstruction: string = 
   const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
   const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
   const blob = await response.blob();
-  return URL.createObjectURL(blob);
+  
+  return { 
+    url: URL.createObjectURL(blob),
+    debug: { brief, finalVideoPrompt, editInstruction }
+  };
 };
 
 export const fetchLatestTrends = async (industry: string, lang: Language): Promise<Notification[]> => {
   const ai = getAI();
-  const prompt = `Identify current viral social media trends specifically for the ${industry} industry. Language: ${lang}. Return in JSON format.`;
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      tools: [{ googleSearch: {} }],
-      responseMimeType: "application/json"
-    }
-  });
+  const prompt = `Latest viral trends for ${industry} as of today. lang: ${lang}`;
   try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: { tools: [{ googleSearch: {} }], responseMimeType: "application/json" }
+    });
     const data = JSON.parse(response.text || "[]");
-    return data.map((item: any) => ({
-      ...item,
-      id: Math.random().toString(),
-      timestamp: 'Now',
-      read: false
-    }));
-  } catch {
-    return [];
-  }
+    return data.map((item: any) => ({ ...item, id: Math.random().toString(), timestamp: 'Now', read: false }));
+  } catch { return []; }
 };

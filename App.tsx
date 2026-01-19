@@ -45,7 +45,6 @@ const App: React.FC = () => {
   const t = translations[lang];
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Persistence Engine: Session Recovery
   useEffect(() => {
     const sessionEmail = localStorage.getItem('sociai_session_email');
     if (sessionEmail) {
@@ -54,20 +53,16 @@ const App: React.FC = () => {
         setProfile(userProfile);
         setIsLoggedIn(true);
         setCurrentView(View.DASHBOARD);
-        
-        // Load user-specific data
         setPosts(dbService.getTransmissions(sessionEmail));
         setNotifications(dbService.getNotifications(sessionEmail));
         const savedCredits = localStorage.getItem(`credits_${sessionEmail}`);
         if (savedCredits) setCredits(parseInt(savedCredits));
       }
     }
-    
     const savedLang = localStorage.getItem('sociai_lang');
     if (savedLang) setLang(savedLang as Language);
   }, []);
 
-  // Persistence Engine: Auto-sync to DB
   useEffect(() => {
     if (!isLoggedIn || !profile?.email) return;
     
@@ -80,26 +75,33 @@ const App: React.FC = () => {
         localStorage.setItem(`credits_${profile.email}`, credits.toString());
         setIsSyncing(false);
       } catch (e) {
-        console.error("Critical Sync Error:", e);
         setGlobalError(lang === 'pl' ? "Przerwano połączenie z Holonetem. Synchronizacja nieudana." : "Holonet connection disrupted. Sync failed.");
         setIsSyncing(false);
       }
-    }, 1000);
+    }, 800);
 
-    return () => clearTimeout(syncTimeout);
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        // Force immediate save on exit
+        dbService.saveUser(profile.email!, profile);
+        dbService.saveTransmissions(profile.email!, posts);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+        clearTimeout(syncTimeout);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, [profile, posts, credits, notifications, isLoggedIn]);
 
   const handleOnboardingComplete = async (brandProfile: BrandProfile) => {
     setIsLoading(true);
     setGlobalError(null);
     try {
-      // Save primary user record
       dbService.saveUser(brandProfile.email!, brandProfile);
       setProfile(brandProfile);
       setIsLoggedIn(true);
       localStorage.setItem('sociai_session_email', brandProfile.email!);
 
-      // Generate initial strategy
       const initialPosts = await generateInitialStrategy(brandProfile, lang);
       setPosts(initialPosts);
       dbService.saveTransmissions(brandProfile.email!, initialPosts);
@@ -115,7 +117,6 @@ const App: React.FC = () => {
       setNotifications([welcomeNote]);
       setCurrentView(View.DASHBOARD);
     } catch (e) {
-      console.error("Launch sequence failed", e);
       setGlobalError(lang === 'pl' ? "Procedura startowa przerwana. Spróbuj ponownie." : "Launch sequence interrupted. Try again.");
     } finally {
       setIsLoading(false);
@@ -126,8 +127,6 @@ const App: React.FC = () => {
     setProfile(authenticatedProfile);
     setIsLoggedIn(true);
     localStorage.setItem('sociai_session_email', authenticatedProfile.email!);
-    
-    // Refresh data for this specific user
     setPosts(dbService.getTransmissions(authenticatedProfile.email!));
     setNotifications(dbService.getNotifications(authenticatedProfile.email!));
     setCurrentView(View.DASHBOARD);
@@ -160,7 +159,6 @@ const App: React.FC = () => {
       );
     }
 
-    // Route Guard
     if (isLoggedIn && (currentView === View.LANDING || currentView === View.AUTH)) {
         setCurrentView(View.DASHBOARD);
     }
@@ -259,10 +257,7 @@ const App: React.FC = () => {
              {showSidebar ? (
                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400">{isSidebarOpen ? <X size={22} /> : <Menu size={22} />}</button>
              ) : (
-               <button 
-                 onClick={handleLogoClick}
-                 className="flex items-center gap-3 hover:opacity-80 transition text-white"
-               >
+               <button onClick={handleLogoClick} className="flex items-center gap-3 hover:opacity-80 transition text-white">
                  <Zap size={22} className="text-cyber-purple" />
                  <span className="font-futuristic font-black tracking-tighter uppercase hidden sm:inline">SociAI Studio</span>
                </button>
@@ -271,7 +266,7 @@ const App: React.FC = () => {
                <div className="flex items-center gap-3 bg-cyber-purple/10 border border-cyber-purple/20 px-4 py-1 rounded-full">
                  <BatteryCharging size={16} className="text-cyber-purple" />
                  <span className="text-cyber-purple font-black text-sm uppercase">{credits}</span>
-                 {isSyncing && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse ml-2" title={lang === 'pl' ? "Synchronizacja z Holonetem" : "Syncing to Holonet"} />}
+                 {isSyncing && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse ml-2" />}
                </div>
              )}
            </div>
@@ -314,17 +309,7 @@ const App: React.FC = () => {
                   Powered by <span className="text-cyber-turquoise">Gemini 2.5 Flash</span> & <span className="text-cyber-purple">Use the Force AI</span>
                </p>
             </div>
-            <p className="text-[10px] text-gray-600 uppercase tracking-widest font-bold">
-               May the AI be with you.
-            </p>
-            {!isLoggedIn && (
-               <button 
-                 onClick={() => setCurrentView(View.LANDING)}
-                 className="text-[10px] text-cyber-turquoise hover:text-white transition font-black uppercase tracking-widest flex items-center justify-center gap-2 mx-auto mt-4 group"
-               >
-                 <Home size={12} className="group-hover:-translate-y-0.5 transition-transform" /> {t.backToHome}
-               </button>
-            )}
+            <p className="text-[10px] text-gray-600 uppercase tracking-widest font-bold">May the AI be with you.</p>
         </footer>
       </main>
     </div>

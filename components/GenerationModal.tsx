@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { translations, Language } from '../translations';
-import { X, Sparkles, Download, CheckCircle, Terminal, AlertCircle, Key, Camera, Layout, RotateCw, Loader2, MessageSquare } from 'lucide-react';
+import { X, Sparkles, Download, CheckCircle, Terminal, AlertCircle, Key, Camera, Layout, RotateCw, Loader2, MessageSquare, Info } from 'lucide-react';
 import { generateAIImage, generateAIVideo } from '../services/geminiService';
 import { BrandProfile, ImageGenMode } from '../types';
 
@@ -14,6 +14,16 @@ interface GenerationModalProps {
   initialImageUrl?: string;
 }
 
+const VIDEO_STATUS_MESSAGES = [
+    "Initiating VEO Neural Network...",
+    "Scanning Brand Holocron...",
+    "Synthesizing creative brief...",
+    "Rendering cinematic frames...",
+    "Applying balanced color palette...",
+    "Finalizing Mission-critical sequence...",
+    "Almost ready to transmit..."
+];
+
 export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, lang, onClose, onSuccess, brandContext, initialImageUrl }) => {
   const t = translations[lang];
   const [isGenerating, setIsGenerating] = useState(false);
@@ -26,6 +36,8 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
   const [mode, setMode] = useState<ImageGenMode>('PHOTO');
   const [variantCount, setVariantCount] = useState(0);
   const [editInstruction, setEditInstruction] = useState('');
+  const [debugData, setDebugData] = useState<any>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   const handleStartGeneration = async (skipKeyCheck = false, seed: number = 0) => {
     if (type === 'video' && !skipKeyCheck) {
@@ -34,35 +46,42 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
     }
 
     setIsGenerating(true);
-    // Maintain old preview if regenerating
     if (seed === 0 && !initialImageUrl) setIsDone(false); 
     
     setNeedsKey(false);
     setError(null);
-    setLogs(prev => [...prev, `[SYS] ${seed > 0 ? 'Recalibrating' : 'Initiating'} ${type} engine (Seed: ${seed})...`]);
+    setLogs(prev => [...prev, `[JedAi Diagnostic] ${seed > 0 ? 'Recalibrating' : 'Initiating'} ${type} engine (Seed: ${seed})...`]);
     setProgress(10);
+
+    const statusInterval = setInterval(() => {
+        setLogs(prev => {
+            const nextMsg = VIDEO_STATUS_MESSAGES[Math.floor(Math.random() * VIDEO_STATUS_MESSAGES.length)];
+            return [...prev.slice(-10), `[AI] ${nextMsg}`];
+        });
+        setProgress(p => Math.min(p + 5, 95));
+    }, 4000);
 
     try {
       if (type === 'image' && brandContext) {
-        setLogs(prev => [...prev, "[AI] Loading Brand Context & Style References..."]);
         const result = await generateAIImage(prompt, brandContext, 'instagram', mode, seed, editInstruction);
-        setLogs(prev => [...prev, "[AI] Brief synthesized.", "[AI] Rendering scene..."]);
         setResultUrl(result.url);
+        setDebugData(result.debug);
         setProgress(100);
         setIsDone(true);
         onSuccess(result.url, result.brief, result.prompt, mode, result.debug);
-      } else if (type === 'video') {
-        setLogs(prev => [...prev, "[AI] Initializing VEO Video Engine..."]);
-        const url = await generateAIVideo(prompt, editInstruction);
-        setResultUrl(url);
+      } else if (type === 'video' && brandContext) {
+        const result = await generateAIVideo(prompt, brandContext, editInstruction);
+        setResultUrl(result.url);
+        setDebugData(result.debug);
         setProgress(100);
         setIsDone(true);
-        onSuccess(url);
+        onSuccess(result.url, null, null, undefined, result.debug);
       }
     } catch (e: any) {
       setError(e.message || "Force connection failed.");
       setIsGenerating(false);
     } finally {
+      clearInterval(statusInterval);
       setIsGenerating(false);
     }
   };
@@ -91,12 +110,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
             <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-center flex flex-col items-center gap-4">
               <AlertCircle size={32} />
               <p className="font-bold uppercase tracking-widest text-xs">{error}</p>
-              <button 
-                onClick={() => handleStartGeneration(false, variantCount)} 
-                className="px-6 py-2 bg-red-500 text-white rounded-lg font-black text-[10px] uppercase hover:bg-red-600 transition"
-              >
-                TRY AGAIN
-              </button>
+              <button onClick={() => handleStartGeneration(false, variantCount)} className="px-6 py-2 bg-red-500 text-white rounded-lg font-black text-[10px] uppercase hover:bg-red-600 transition">TRY AGAIN</button>
             </div>
           )}
 
@@ -108,26 +122,18 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
               
               {type === 'image' && (
                 <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
-                    <button 
-                        onClick={() => setMode('PHOTO')}
-                        className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 ${mode === 'PHOTO' ? 'border-cyber-turquoise bg-cyber-turquoise/10 text-cyber-turquoise shadow-[0_0_15px_rgba(52,224,247,0.2)]' : 'border-white/10 text-gray-500 hover:border-white/20'}`}
-                    >
-                        <Camera size={24} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">PHOTO</span>
+                    <button onClick={() => setMode('PHOTO')} className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 ${mode === 'PHOTO' ? 'border-cyber-turquoise bg-cyber-turquoise/10 text-cyber-turquoise' : 'border-white/10 text-gray-500'}`}>
+                        <Camera size={24} /> <span className="text-[10px] font-black uppercase tracking-widest">PHOTO</span>
                     </button>
-                    <button 
-                        onClick={() => setMode('POSTER')}
-                        className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 ${mode === 'POSTER' ? 'border-cyber-magenta bg-cyber-magenta/10 text-cyber-magenta shadow-[0_0_15px_rgba(199,76,255,0.2)]' : 'border-white/10 text-gray-500 hover:border-white/20'}`}
-                    >
-                        <Layout size={24} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">POSTER</span>
+                    <button onClick={() => setMode('POSTER')} className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 ${mode === 'POSTER' ? 'border-cyber-magenta bg-cyber-magenta/10 text-cyber-magenta' : 'border-white/10 text-gray-500'}`}>
+                        <Layout size={24} /> <span className="text-[10px] font-black uppercase tracking-widest">POSTER</span>
                     </button>
                 </div>
               )}
 
               <div className="text-left space-y-2">
                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                  <MessageSquare size={12} /> {t.editInstructionLabel} (Opcjonalnie)
+                  <MessageSquare size={12} /> {t.editInstructionLabel}
                 </label>
                 <textarea 
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyber-purple text-xs text-gray-300 h-20"
@@ -137,10 +143,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
                 />
               </div>
 
-              <button 
-                onClick={() => handleStartGeneration()}
-                className="w-full py-4 bg-cyber-purple text-white font-black rounded-xl hover:bg-cyber-magenta transition uppercase tracking-widest shadow-[0_0_20px_rgba(140,77,255,0.3)]"
-              >
+              <button onClick={() => handleStartGeneration()} className="w-full py-4 bg-cyber-purple text-white font-black rounded-xl hover:bg-cyber-magenta transition uppercase tracking-widest shadow-[0_0_20px_rgba(140,77,255,0.3)]">
                 Launch {type} Engine
               </button>
             </div>
@@ -153,31 +156,39 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
                   </div>
                   <h3 className="font-futuristic font-bold text-white uppercase tracking-widest">{t.genWorking}</h3>
                 </div>
-                
                 <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                   <div className="h-full bg-cyber-purple transition-all duration-300" style={{ width: `${progress}%` }} />
                 </div>
                 <div className="bg-black/50 rounded-xl p-4 font-mono text-[9px] text-green-400 h-32 overflow-y-auto text-left border border-white/5">
                     {logs.map((log, i) => <div key={i}>{log}</div>)}
-                    <div className="animate-pulse">_ Generating variant...</div>
                 </div>
             </div>
           ) : isDone && (
             <div className="text-center space-y-6 animate-fadeIn">
                <div className="flex flex-col items-center gap-2 mb-4">
-                  <div className="w-12 h-12 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center">
-                    <CheckCircle size={24} />
-                  </div>
+                  <div className="w-12 h-12 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center"><CheckCircle size={24} /></div>
                   <h3 className="text-xl font-futuristic font-bold text-white uppercase tracking-tighter">{t.genComplete}</h3>
                </div>
 
                <div className="aspect-video w-full rounded-2xl bg-white/5 border border-white/10 overflow-hidden relative group shadow-2xl">
-                  {type === 'image' ? (
-                    <img src={resultUrl!} className="w-full h-full object-cover" />
-                  ) : (
-                    <video src={resultUrl!} controls className="w-full h-full object-cover" />
+                  {type === 'image' ? <img src={resultUrl!} className="w-full h-full object-cover" /> : <video src={resultUrl!} controls className="w-full h-full object-cover" />}
+                  
+                  {debugData && (
+                      <button onClick={() => setShowDebug(!showDebug)} className="absolute top-2 right-2 p-2 bg-black/60 rounded-lg text-cyber-turquoise opacity-0 group-hover:opacity-100 transition">
+                          <Info size={16} />
+                      </button>
                   )}
                </div>
+
+               {showDebug && debugData && (
+                   <div className="bg-black/50 rounded-xl p-4 text-left font-mono text-[8px] text-gray-400 border border-white/5 animate-slideDown">
+                       <p className="text-cyber-turquoise font-bold mb-1 uppercase">[JedAi Debug Snapshot]</p>
+                       <p>Palette: {debugData.paletteUsed?.join(', ')}</p>
+                       <p>Ref Images: {debugData.usedReferenceImages ? 'YES' : 'NO'}</p>
+                       <p>Missing Context: {debugData.missingFields?.join(', ') || 'NONE'}</p>
+                       <p className="mt-1 text-[7px] opacity-50">Instruction: {editInstruction || 'Initial'}</p>
+                   </div>
+               )}
                
                <div className="space-y-4">
                   <div className="text-left space-y-2">
@@ -193,19 +204,10 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
                   </div>
 
                   <div className="space-y-3">
-                    <button 
-                      onClick={handleRegenerate}
-                      disabled={isGenerating}
-                      className="w-full py-4 bg-cyber-purple text-white rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-cyber-magenta shadow-[0_0_20px_rgba(140,77,255,0.4)] transition-all disabled:opacity-50"
-                    >
-                      <RotateCw size={18} className={isGenerating ? 'animate-spin' : ''} />
-                      {t.addMorePower}
+                    <button onClick={handleRegenerate} disabled={isGenerating} className="w-full py-4 bg-cyber-purple text-white rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-cyber-magenta shadow-[0_0_20px_rgba(140,77,255,0.4)] transition-all">
+                      <RotateCw size={18} className={isGenerating ? 'animate-spin' : ''} /> {t.addMorePower}
                     </button>
-                    <button 
-                      onClick={onClose} 
-                      disabled={isGenerating}
-                      className="w-full py-3 text-gray-400 hover:text-white rounded-xl font-bold uppercase transition bg-white/5 border border-white/10"
-                    >
+                    <button onClick={onClose} disabled={isGenerating} className="w-full py-3 text-gray-400 hover:text-white rounded-xl font-bold uppercase transition bg-white/5 border border-white/10">
                       {t.close}
                     </button>
                   </div>
