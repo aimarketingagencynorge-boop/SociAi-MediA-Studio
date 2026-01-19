@@ -5,14 +5,28 @@ import { Language } from "../translations";
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const prepareImagePart = (dataUrl: string) => {
-  const [header, data] = dataUrl.split(',');
-  const mimeType = header.match(/:(.*?);/)?.[1] || 'image/png';
-  return {
-    inlineData: {
-      data,
-      mimeType
+  if (!dataUrl || !dataUrl.includes(',')) return null;
+  try {
+    const [header, data] = dataUrl.split(',');
+    const mimeMatch = header.match(/:(.*?);/);
+    const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+    
+    // Obsługa tylko wspieranych typów przez Gemini API
+    const supportedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif'];
+    if (!supportedTypes.includes(mimeType)) {
+      console.warn(`[JedAi] Unsupported mimeType: ${mimeType}. Falling back to image/png`);
     }
-  };
+
+    return {
+      inlineData: {
+        data: data.trim(),
+        mimeType: supportedTypes.includes(mimeType) ? mimeType : 'image/png'
+      }
+    };
+  } catch (e) {
+    console.error("[JedAi] Error preparing image part:", e);
+    return null;
+  }
 };
 
 export const analyzeBrandIdentity = async (name: string, website?: string): Promise<Partial<BrandProfile>> => {
@@ -89,7 +103,6 @@ export const generateInitialStrategy = async (profile: BrandProfile, lang: Langu
     });
     return JSON.parse(response.text || "[]");
   } catch (e) {
-    // Fallback strategy if API fails
     return [
       { id: 'f1', platform: 'instagram', date: new Date().toISOString().split('T')[0], content: `Witajcie w ${profile.name}! Jesteśmy gotowi na nowe wyzwania.`, hashtags: ['nowość', profile.name.toLowerCase()], status: 'draft', mediaSource: 'ai_generated' }
     ];
@@ -178,10 +191,22 @@ export const generateAIImage = async (
     const paletteStr = brief.palette?.join(', ') || profile.primaryColor;
 
     const contentParts: any[] = [];
+    
+    // Walidacja i dodawanie obrazów referencyjnych (maksymalnie 3)
     if (profile.styleReferenceUrls?.length) {
-      profile.styleReferenceUrls.slice(0, 3).forEach(url => contentParts.push(prepareImagePart(url)));
+      profile.styleReferenceUrls
+        .filter(url => url && url.startsWith('data:'))
+        .slice(0, 3)
+        .map(url => prepareImagePart(url))
+        .filter(Boolean)
+        .forEach(part => contentParts.push(part));
     }
-    if (profile.logoUrl) contentParts.push(prepareImagePart(profile.logoUrl));
+
+    // Walidacja i dodawanie logo
+    if (profile.logoUrl && profile.logoUrl.startsWith('data:')) {
+      const logoPart = prepareImagePart(profile.logoUrl);
+      if (logoPart) contentParts.push(logoPart);
+    }
 
     const finalImagePrompt = `${mode === 'PHOTO' ? 'Professional commercial photography' : 'Modern high-end graphic design'} of ${brief.main_subject}.
     STYLE: ${brief.visual_style}. MOOD: ${brief.mood}.
@@ -222,7 +247,6 @@ export const generateAIImage = async (
 export const generateAIVideo = async (prompt: string, profile: BrandProfile, editInstruction: string = ''): Promise<{url: string, debug: any}> => {
   const ai = getAI();
   
-  // ETAP 1: Creative Brief for Video
   const videoBriefPrompt = `Create a cinematic video brief for: "${prompt}". 
   Brand: ${profile.name}, Industry: ${profile.industry}. 
   Colors: ${profile.primaryColor}. Mood: Cinematic and professional. No text.

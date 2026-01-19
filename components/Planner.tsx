@@ -61,7 +61,10 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
             aiPrompt: result.prompt,
             aiDebug: result.debug
         } : p));
-    } catch (e) { console.error("Regeneration failed", e); } finally {
+    } catch (e: any) { 
+      console.error("Regeneration failed", e); 
+      alert(e.message || "Failed to regenerate image.");
+    } finally {
         setRegeneratingPostIds(prev => { const next = new Set(prev); next.delete(post.id); return next; });
     }
   };
@@ -229,24 +232,24 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
 
                                 {(post.imageUrl || post.videoUrl) && (
                                     <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-2">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-3">
                                             <button 
                                                 onClick={() => setGenModal({type: post.videoUrl ? 'video' : 'image', prompt: post.content, postId: post.id, initialUrl: post.imageUrl || post.videoUrl})}
-                                                className="p-2 text-gray-500 hover:text-cyber-turquoise hover:bg-white/5 rounded-lg transition-colors"
+                                                className="p-1 text-gray-500 hover:text-white transition-colors"
                                                 title={t.edit}
                                             >
-                                                <Edit2 size={18} />
+                                                <Edit2 size={20} />
                                             </button>
                                             <button 
                                                 onClick={() => onUpdatePosts(posts.filter(p => p.id !== post.id))}
-                                                className="p-2 text-gray-500 hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors"
+                                                className="p-1 text-gray-500 hover:text-red-400 transition-colors"
                                                 title="Usuń"
                                             >
-                                                <Trash2 size={18} />
+                                                <Trash2 size={20} />
                                             </button>
                                         </div>
                                         {post.format && (
-                                            <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] shadow-inner">
+                                            <div className="px-5 py-2.5 bg-cyber-card border border-white/10 rounded-xl text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] shadow-lg">
                                                 Format: {post.format}
                                             </div>
                                         )}
