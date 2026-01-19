@@ -1,61 +1,50 @@
-import { BrandProfile, SocialPost, Notification, Integration } from '../types';
+import { BrandProfile, SocialPost, Notification } from '../types';
 
 /**
- * JedAi Database Service (Mock DB)
- * Symuluje architekturę backendową z izolacją danych per User.
+ * JedAi Database Service
+ * Obsługuje persystencję danych z izolacją per User ID.
  */
 
-const DB_PREFIX = 'sociai_db_v1_';
+const DB_PREFIX = 'sociai_db_v2_'; // Nowa wersja bazy
+
+// Prosta funkcja do obfuscacji klucza e-mail
+const getUid = (email: string) => btoa(email).substring(0, 16);
 
 export const dbService = {
-  // --- AUTH & USERS ---
   saveUser: (email: string, profile: BrandProfile) => {
-    localStorage.setItem(`${DB_PREFIX}user_${email}`, JSON.stringify(profile));
-    console.debug(`[JedAi DB] User ${email} registered/updated.`);
+    const uid = getUid(email);
+    const data = JSON.stringify(profile);
+    localStorage.setItem(`${DB_PREFIX}u_${uid}`, data);
+    console.debug(`[JedAi Sync] User ${uid} saved. Payload: ${data.length} bytes.`);
   },
 
   getUser: (email: string): BrandProfile | null => {
-    const data = localStorage.getItem(`${DB_PREFIX}user_${email}`);
+    const uid = getUid(email);
+    const data = localStorage.getItem(`${DB_PREFIX}u_${uid}`);
     return data ? JSON.parse(data) : null;
   },
 
-  // --- MISSIONS (Projects) ---
-  saveMission: (userId: string, mission: BrandProfile) => {
-    localStorage.setItem(`${DB_PREFIX}mission_${userId}`, JSON.stringify(mission));
+  saveTransmissions: (email: string, posts: SocialPost[]) => {
+    const uid = getUid(email);
+    const data = JSON.stringify(posts);
+    localStorage.setItem(`${DB_PREFIX}p_${uid}`, data);
+    console.debug(`[JedAi Sync] Transmissions for ${uid} saved. Count: ${posts.length}.`);
   },
 
-  getMission: (userId: string): BrandProfile | null => {
-    const data = localStorage.getItem(`${DB_PREFIX}mission_${userId}`);
-    return data ? JSON.parse(data) : null;
-  },
-
-  // --- TRANSMISSIONS (Posts) ---
-  saveTransmissions: (userId: string, posts: SocialPost[]) => {
-    localStorage.setItem(`${DB_PREFIX}posts_${userId}`, JSON.stringify(posts));
-  },
-
-  getTransmissions: (userId: string): SocialPost[] => {
-    const data = localStorage.getItem(`${DB_PREFIX}posts_${userId}`);
+  getTransmissions: (email: string): SocialPost[] => {
+    const uid = getUid(email);
+    const data = localStorage.getItem(`${DB_PREFIX}p_${uid}`);
     return data ? JSON.parse(data) : [];
   },
 
-  // --- DOCKING BAY (Integrations) ---
-  saveIntegrations: (userId: string, integrations: any[]) => {
-    localStorage.setItem(`${DB_PREFIX}integrations_${userId}`, JSON.stringify(integrations));
+  saveNotifications: (email: string, notifications: Notification[]) => {
+    const uid = getUid(email);
+    localStorage.setItem(`${DB_PREFIX}n_${uid}`, JSON.stringify(notifications));
   },
 
-  getIntegrations: (userId: string): any[] => {
-    const data = localStorage.getItem(`${DB_PREFIX}integrations_${userId}`);
-    return data ? JSON.parse(data) : [];
-  },
-
-  // --- ASSETS & NOTIFICATIONS ---
-  saveNotifications: (userId: string, notifications: Notification[]) => {
-    localStorage.setItem(`${DB_PREFIX}notif_${userId}`, JSON.stringify(notifications));
-  },
-
-  getNotifications: (userId: string): Notification[] => {
-    const data = localStorage.getItem(`${DB_PREFIX}notif_${userId}`);
+  getNotifications: (email: string): Notification[] => {
+    const uid = getUid(email);
+    const data = localStorage.getItem(`${DB_PREFIX}n_${uid}`);
     return data ? JSON.parse(data) : [];
   }
 };
