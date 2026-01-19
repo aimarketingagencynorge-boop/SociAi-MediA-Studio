@@ -1,4 +1,3 @@
-
 export type Language = 'pl' | 'en';
 
 export const translations = {
@@ -53,7 +52,7 @@ export const translations = {
     creditsAdded: "Kredyty Mocy zostały dodane.",
     needApiKey: "Wymagany klucz API",
     openKeySelector: "SKONFIGURUJ",
-    close: "ZAMKNIJ",
+    close: "OK / ZAMKNIJ",
     notifications: "Powiadomienia",
     noNotifications: "Brak powiadomień",
     markAllRead: "Oznacz jako przeczytane",
@@ -196,7 +195,7 @@ export const translations = {
     creditsAdded: "Force Credits added.",
     needApiKey: "API Key Required",
     openKeySelector: "CONFIGURE",
-    close: "CLOSE",
+    close: "OK / CLOSE",
     notifications: "Notifications",
     noNotifications: "No notifications",
     markAllRead: "Mark as read",

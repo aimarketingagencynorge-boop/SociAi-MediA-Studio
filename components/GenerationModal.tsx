@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { translations, Language } from '../translations';
 import { X, Sparkles, Download, CheckCircle, Terminal, AlertCircle, Key, Camera, Layout, RotateCw, Loader2 } from 'lucide-react';
@@ -33,8 +32,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
     }
 
     setIsGenerating(true);
-    // Don't set isDone to false if we are just regenerating in the success state
-    // so we can keep showing the old result until the new one is ready
+    // Don't set isDone to false immediately if we are regenerating so we can keep the old preview visible
     if (seed === 0) setIsDone(false); 
     
     setNeedsKey(false);
@@ -168,16 +166,17 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
                   <button 
                     onClick={handleRegenerate}
                     disabled={isGenerating}
-                    className="w-full py-4 bg-cyber-purple text-white rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-cyber-magenta shadow-[0_0_20px_rgba(140,77,255,0.3)] transition-all disabled:opacity-50"
+                    className="w-full py-4 bg-cyber-purple text-white rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-cyber-magenta shadow-[0_0_20px_rgba(140,77,255,0.4)] transition-all disabled:opacity-50"
                   >
                     <RotateCw size={18} className={isGenerating ? 'animate-spin' : ''} />
                     {t.addMorePower}
                   </button>
                   <button 
                     onClick={onClose} 
-                    className="w-full py-3 text-gray-400 hover:text-white rounded-xl font-bold uppercase transition bg-white/5 border border-white/5"
+                    disabled={isGenerating}
+                    className="w-full py-3 text-gray-400 hover:text-white rounded-xl font-bold uppercase transition bg-white/5 border border-white/10"
                   >
-                    OK / CLOSE
+                    {t.close}
                   </button>
                </div>
             </div>

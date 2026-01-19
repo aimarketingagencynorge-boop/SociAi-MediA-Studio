@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef } from 'react';
 import { NeonCard } from './NeonCard';
 import { BrandProfile, SocialPost, PostStatus, MediaSource, ContentFormat, ImageGenMode } from '../types';
@@ -132,12 +131,10 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                 creativeBrief: brief,
                 aiPrompt,
                 aiMode: mode,
-                imageHistory: [...(p.imageHistory || []), url],
-                variantCount: (p.variantCount || 0),
+                imageHistory: [...(p.imageHistory || [p.imageUrl]).filter(Boolean), url] as string[],
+                variantCount: (p.variantCount || 0) + 1,
                 aiDebug
               } : p));
-              // Note: credits already deducted by handleRegenerateImage if called from there
-              // This onSuccess is shared with the first-time generator in the modal.
           }}
         />
       )}
@@ -191,18 +188,18 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                         <img src={post.imageUrl} className={`w-full aspect-[4/3] object-cover transition-all duration-700 ${regeneratingPostIds.has(post.id) ? 'blur-md brightness-50' : 'group-hover/img:scale-105'}`} />
                                         
                                         {regeneratingPostIds.has(post.id) && (
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-cyber-turquoise gap-2">
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-cyber-turquoise gap-2 z-30">
                                                 <Loader2 size={32} className="animate-spin" />
                                                 <span className="text-[10px] font-black uppercase tracking-widest">Regenerating...</span>
                                             </div>
                                         )}
 
                                         {/* Overlay Controls */}
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4 z-20">
                                             <div className="flex gap-2">
                                                 <button 
                                                     onClick={() => setGenModal({type: 'image', prompt: post.content, postId: post.id})}
-                                                    className="p-3 bg-white/10 backdrop-blur-md rounded-xl text-white hover:bg-cyber-purple transition flex flex-col items-center gap-1"
+                                                    className="p-3 bg-white/10 backdrop-blur-md rounded-xl text-white hover:bg-cyber-purple transition flex flex-col items-center gap-1 border border-white/10"
                                                 >
                                                     <Edit2 size={18} />
                                                     <span className="text-[8px] font-black uppercase">{t.edit}</span>
@@ -210,7 +207,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                                 <button 
                                                     onClick={() => handleRegenerateImage(post)}
                                                     disabled={regeneratingPostIds.has(post.id)}
-                                                    className="p-3 bg-white/10 backdrop-blur-md rounded-xl text-white hover:bg-cyber-magenta transition flex flex-col items-center gap-1"
+                                                    className="p-3 bg-white/10 backdrop-blur-md rounded-xl text-white hover:bg-cyber-magenta transition flex flex-col items-center gap-1 border border-white/10"
                                                 >
                                                     <RotateCw size={18} className={regeneratingPostIds.has(post.id) ? 'animate-spin' : ''} />
                                                     <span className="text-[8px] font-black uppercase">{t.addMorePower}</span>
@@ -220,18 +217,18 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
 
                                         {/* Variant Selector */}
                                         {post.imageHistory && post.imageHistory.length > 1 && (
-                                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 z-20">
-                                                <button onClick={() => handleSwitchVariant(post.id, 'prev')} className="text-gray-400 hover:text-white"><ChevronLeft size={16}/></button>
+                                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 z-40">
+                                                <button onClick={() => handleSwitchVariant(post.id, 'prev')} className="text-gray-400 hover:text-white transition"><ChevronLeft size={16}/></button>
                                                 <span className="text-[10px] font-black text-white whitespace-nowrap">
                                                     {(post.imageHistory.indexOf(post.imageUrl || '') + 1)} / {post.imageHistory.length}
                                                 </span>
-                                                <button onClick={() => handleSwitchVariant(post.id, 'next')} className="text-gray-400 hover:text-white"><ChevronRight size={16}/></button>
+                                                <button onClick={() => handleSwitchVariant(post.id, 'next')} className="text-gray-400 hover:text-white transition"><ChevronRight size={16}/></button>
                                             </div>
                                         )}
 
                                         {/* AI DEBUG INDICATOR */}
                                         {post.aiDebug && (
-                                            <div className="absolute top-3 left-3 flex gap-1 z-20">
+                                            <div className="absolute top-3 left-3 flex gap-1 z-40">
                                                 {post.aiDebug.usedReferenceImages && (
                                                     <div className="bg-green-500/80 p-1 rounded-lg text-white" title="Used Ref Style Assets">
                                                         <Shield size={10} />
