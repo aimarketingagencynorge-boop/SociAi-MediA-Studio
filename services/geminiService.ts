@@ -11,16 +11,17 @@ const prepareImagePart = (dataUrl: string) => {
     const mimeMatch = header.match(/:(.*?);/);
     const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
     
-    // Obsługa tylko wspieranych typów przez Gemini API
+    // Gemini API wspiera: image/png, image/jpeg, image/webp, image/heic, image/heif
     const supportedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif'];
-    if (!supportedTypes.includes(mimeType)) {
-      console.warn(`[JedAi] Unsupported mimeType: ${mimeType}. Falling back to image/png`);
-    }
+    const finalMime = supportedTypes.includes(mimeType) ? mimeType : 'image/png';
+
+    // Rygorystyczne oczyszczenie base64 - usuwamy białe znaki, które mogą powodować błąd 400
+    const cleanData = data.replace(/\s/g, '');
 
     return {
       inlineData: {
-        data: data.trim(),
-        mimeType: supportedTypes.includes(mimeType) ? mimeType : 'image/png'
+        data: cleanData,
+        mimeType: finalMime
       }
     };
   } catch (e) {
@@ -165,9 +166,9 @@ export const generateAIImage = async (
     REQUIREMENTS:
     1. Define main subject (no text on image).
     2. Balanced 5-color hex palette (3 primary, 1 accent, 1 neutral).
-    3. Industry-specific style (e.g. food photography for restaurants).
-    4. NO futuristic HUD or neon grids.
-    5. No monochrome red.
+    3. Industry-specific style.
+    4. NO futuristic HUD or neon grids unless specifically requested.
+    5. No monochrome.
     Return ONLY JSON.`;
 
     const briefResponse = await ai.models.generateContent({
@@ -192,17 +193,16 @@ export const generateAIImage = async (
 
     const contentParts: any[] = [];
     
-    // Walidacja i dodawanie obrazów referencyjnych (maksymalnie 3)
+    // Ograniczamy liczbę obrazów referencyjnych do 1 najbardziej istotnego, aby nie przekroczyć limitu payloadu (zapobiega błędowi 400)
     if (profile.styleReferenceUrls?.length) {
-      profile.styleReferenceUrls
-        .filter(url => url && url.startsWith('data:'))
-        .slice(0, 3)
-        .map(url => prepareImagePart(url))
-        .filter(Boolean)
-        .forEach(part => contentParts.push(part));
+      const bestRef = profile.styleReferenceUrls[0];
+      if (bestRef && bestRef.startsWith('data:')) {
+        const part = prepareImagePart(bestRef);
+        if (part) contentParts.push(part);
+      }
     }
 
-    // Walidacja i dodawanie logo
+    // Dodajemy logo tylko jeśli jest małe i poprawne
     if (profile.logoUrl && profile.logoUrl.startsWith('data:')) {
       const logoPart = prepareImagePart(profile.logoUrl);
       if (logoPart) contentParts.push(logoPart);
@@ -217,6 +217,7 @@ export const generateAIImage = async (
 
     const negativePrompt = "text, letters, words, watermark, logo text, futuristic hud, sci-fi interface, red monochrome, neon grid, poster template, UI, buttons, menu, gibberish";
 
+    // Prompt musi być ostatnim elementem tablicy parts
     contentParts.push({ text: `${finalImagePrompt}. NEGATIVE: ${negativePrompt}` });
 
     const response = await ai.models.generateContent({

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { NeonCard } from './NeonCard';
 import { BrandProfile, SocialPost, PostStatus, MediaSource, ContentFormat, ImageGenMode } from '../types';
 import { 
-    Instagram, Facebook, Linkedin, Video, Edit2, Trash2, Image as ImageIcon, Sparkles, CheckCircle2, Upload, Zap, Clock, Plus, X, Dna, Shield, Film, RotateCw, Save, Wand2, Loader2, Info, ChevronLeft, ChevronRight
+    Instagram, Facebook, Linkedin, Video, Edit2, Trash2, Image as ImageIcon, Sparkles, CheckCircle2, Upload, Zap, Clock, Plus, X, Dna, Shield, Film, RotateCw, Save, Wand2, Loader2, Info, ChevronLeft, ChevronRight, Settings as SettingsIcon
 } from 'lucide-react';
 import { generateWeeklyStrategy, getFormattedSignature, generateAIImage } from '../services/geminiService';
 import { translations, Language } from '../translations';
@@ -27,6 +27,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
   const [isWeeklyGenActive, setIsWeeklyGenActive] = useState(false);
   const [genModal, setGenModal] = useState<{type: 'image' | 'video', prompt: string, postId: string, initialUrl?: string} | null>(null);
   const [regeneratingPostIds, setRegeneratingPostIds] = useState<Set<string>>(new Set());
+  const [aiMultimediaEnabled, setAiMultimediaEnabled] = useState(true);
   
   const [formats, setFormats] = useState<ContentFormat[]>(DEFAULT_FORMATS);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,6 +45,19 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
         return acc;
     }, {} as Record<string, SocialPost[]>);
   }, [posts]);
+
+  const handleAddManualPost = () => {
+    const newPost: SocialPost = {
+      id: Math.random().toString(36).substr(2, 9),
+      platform: 'instagram',
+      date: new Date().toISOString().split('T')[0],
+      content: 'Nowa transmisja...',
+      hashtags: [],
+      status: 'draft',
+      mediaSource: 'ai_generated'
+    };
+    onUpdatePosts([newPost, ...posts]);
+  };
 
   const handleRegenerateImage = async (post: SocialPost) => {
     if (regeneratingPostIds.has(post.id)) return;
@@ -131,13 +145,37 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
           <h1 className="text-2xl md:text-4xl font-futuristic font-bold neon-text-purple uppercase tracking-[0.15em]">{t.plannerTitle}</h1>
           <p className="text-gray-400 text-xs mt-1 flex items-center gap-2 italic"><Shield size={14} className="text-cyber-turquoise" /> {t.plannerSubtitle}</p>
         </div>
-        <button onClick={handleGenerateWeekly} disabled={isWeeklyGenActive} className="w-full md:w-auto bg-cyber-purple/20 border border-cyber-purple/50 text-cyber-purple px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyber-purple hover:text-white transition">
-           {isWeeklyGenActive ? <Clock className="animate-spin" /> : <Zap size={20} />} {isWeeklyGenActive ? t.genWorking : t.genWeekly}
-        </button>
+        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+          <button onClick={handleAddManualPost} className="bg-white/5 border border-white/10 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition">
+             <Plus size={18} /> {t.addPost}
+          </button>
+          <button onClick={handleGenerateWeekly} disabled={isWeeklyGenActive} className="bg-cyber-purple/20 border border-cyber-purple/50 text-cyber-purple px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyber-purple hover:text-white transition">
+             {isWeeklyGenActive ? <Clock className="animate-spin" /> : <Zap size={20} />} {isWeeklyGenActive ? t.genWorking : t.genWeekly}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-        <div className="xl:col-span-4 space-y-12">
+        <aside className="xl:col-span-1 space-y-6 order-2 xl:order-1">
+           <NeonCard title={t.formatManager} icon={<SettingsIcon size={18}/>}>
+              <div className="space-y-4">
+                 {formats.map(format => (
+                    <div key={format.id} className="p-4 bg-white/5 rounded-xl border-l-4 border-white/10 hover:border-cyber-purple transition-all" style={{ borderLeftColor: format.color }}>
+                        <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-bold text-sm text-white">{format.name}</h4>
+                            <span className="text-[10px] font-black text-gray-500">{format.postsPerWeek}x</span>
+                        </div>
+                        <p className="text-[10px] text-gray-400 uppercase tracking-widest">{format.keyword}</p>
+                    </div>
+                 ))}
+                 <button className="w-full py-3 bg-white/5 border border-dashed border-white/20 text-gray-500 rounded-xl text-xs font-bold uppercase tracking-widest hover:text-white hover:border-white/40 transition">
+                    + {t.addFormat}
+                 </button>
+              </div>
+           </NeonCard>
+        </aside>
+
+        <div className="xl:col-span-3 space-y-12 order-1 xl:order-2">
            {(Object.entries(groupedPosts) as [string, SocialPost[]][]).map(([date, dayPosts]) => (
              <div key={date} className="relative pl-6 md:pl-10 border-l border-white/5 space-y-6">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-cyber-dark border-2 border-cyber-purple shadow-[0_0_10px_#8C4DFF]" />
@@ -164,7 +202,15 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
 
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between px-1">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-500">{t.aiMedia}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-500">{t.aiMedia}</span>
+                                        <button 
+                                            onClick={() => setAiMultimediaEnabled(!aiMultimediaEnabled)}
+                                            className={`w-10 h-5 rounded-full relative transition-colors ${aiMultimediaEnabled ? 'bg-cyber-purple' : 'bg-white/10'}`}
+                                        >
+                                            <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${aiMultimediaEnabled ? 'right-1' : 'left-1'}`} />
+                                        </button>
+                                    </div>
                                     <div className="flex items-center gap-2">
                                         {post.aiMode && <span className="text-[8px] font-black bg-white/10 px-2 py-0.5 rounded text-gray-400">{post.aiMode}</span>}
                                     </div>
