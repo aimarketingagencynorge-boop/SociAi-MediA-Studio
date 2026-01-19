@@ -137,6 +137,8 @@ export const translations = {
     poweredBy: "Zasilane przez Gemini 2.5 Flash",
     recalibrateHolocron: "REKALIBRUJ HOLOKRON",
     addMorePower: "DODAJ WIĘCEJ MOCY",
+    editInstructionLabel: "Co chcesz zmienić?",
+    editInstructionPlaceholder: "Np. mniej czerwieni, pokaż produkt z bliska, bardziej naturalne światło...",
     edit: "EDYTUJ",
     features: {
       starter: ["100 Kredytów", "1 Platforma", "Analityka"],
@@ -280,6 +282,8 @@ export const translations = {
     poweredBy: "Powered by Gemini 2.5 Flash",
     recalibrateHolocron: "RECALIBRATE HOLOCRON",
     addMorePower: "ADD MORE POWER",
+    editInstructionLabel: "What to change?",
+    editInstructionPlaceholder: "E.g. less red, close-up product shot, more natural lighting...",
     edit: "EDIT",
     features: {
       starter: ["100 Credits", "1 Platform", "Analytics"],

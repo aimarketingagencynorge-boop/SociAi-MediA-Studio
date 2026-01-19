@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef } from 'react';
 import { NeonCard } from './NeonCard';
 import { BrandProfile, SocialPost, PostStatus, MediaSource, ContentFormat, ImageGenMode } from '../types';
@@ -25,7 +26,7 @@ const DEFAULT_FORMATS: ContentFormat[] = [
 
 export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdateCredits, onUpdatePosts }) => {
   const [isWeeklyGenActive, setIsWeeklyGenActive] = useState(false);
-  const [genModal, setGenModal] = useState<{type: 'image' | 'video', prompt: string, postId: string} | null>(null);
+  const [genModal, setGenModal] = useState<{type: 'image' | 'video', prompt: string, postId: string, initialUrl?: string} | null>(null);
   const [regeneratingPostIds, setRegeneratingPostIds] = useState<Set<string>>(new Set());
   
   const [formats, setFormats] = useState<ContentFormat[]>(DEFAULT_FORMATS);
@@ -122,18 +123,19 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
           prompt={genModal.prompt} 
           lang={lang} 
           brandContext={profile}
+          initialImageUrl={genModal.initialUrl}
           onClose={() => setGenModal(null)} 
           onSuccess={(url, brief, aiPrompt, mode, aiDebug) => {
               onUpdatePosts(posts.map(p => p.id === genModal.postId ? {
                 ...p,
-                imageUrl: url,
-                videoUrl: undefined,
-                creativeBrief: brief,
-                aiPrompt,
-                aiMode: mode,
-                imageHistory: [...(p.imageHistory || [p.imageUrl]).filter(Boolean), url] as string[],
+                imageUrl: genModal.type === 'image' ? url : p.imageUrl,
+                videoUrl: genModal.type === 'video' ? url : p.videoUrl,
+                creativeBrief: brief || p.creativeBrief,
+                aiPrompt: aiPrompt || p.aiPrompt,
+                aiMode: mode || p.aiMode,
+                imageHistory: genModal.type === 'image' ? [...(p.imageHistory || [p.imageUrl]).filter(Boolean), url] : p.imageHistory,
                 variantCount: (p.variantCount || 0) + 1,
-                aiDebug
+                aiDebug: aiDebug || p.aiDebug
               } : p));
           }}
         />
@@ -183,22 +185,25 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                     </div>
                                 </div>
 
-                                {post.imageUrl ? (
+                                {post.imageUrl || post.videoUrl ? (
                                     <div className="relative group/img rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                                        <img src={post.imageUrl} className={`w-full aspect-[4/3] object-cover transition-all duration-700 ${regeneratingPostIds.has(post.id) ? 'blur-md brightness-50' : 'group-hover/img:scale-105'}`} />
+                                        {post.imageUrl ? (
+                                          <img src={post.imageUrl} className={`w-full aspect-[4/3] object-cover transition-all duration-700 ${regeneratingPostIds.has(post.id) ? 'blur-md brightness-50' : 'group-hover/img:scale-105'}`} />
+                                        ) : (
+                                          <video src={post.videoUrl} className="w-full aspect-[4/3] object-cover" controls />
+                                        )}
                                         
                                         {regeneratingPostIds.has(post.id) && (
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-cyber-turquoise gap-2 z-30">
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-cyber-turquoise gap-2 z-30 bg-black/40">
                                                 <Loader2 size={32} className="animate-spin" />
                                                 <span className="text-[10px] font-black uppercase tracking-widest">Regenerating...</span>
                                             </div>
                                         )}
 
-                                        {/* Overlay Controls */}
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4 z-20">
                                             <div className="flex gap-2">
                                                 <button 
-                                                    onClick={() => setGenModal({type: 'image', prompt: post.content, postId: post.id})}
+                                                    onClick={() => setGenModal({type: post.videoUrl ? 'video' : 'image', prompt: post.content, postId: post.id, initialUrl: post.imageUrl || post.videoUrl})}
                                                     className="p-3 bg-white/10 backdrop-blur-md rounded-xl text-white hover:bg-cyber-purple transition flex flex-col items-center gap-1 border border-white/10"
                                                 >
                                                     <Edit2 size={18} />
@@ -215,18 +220,17 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                             </div>
                                         </div>
 
-                                        {/* Variant Selector */}
                                         {post.imageHistory && post.imageHistory.length > 1 && (
                                             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 z-40">
                                                 <button onClick={() => handleSwitchVariant(post.id, 'prev')} className="text-gray-400 hover:text-white transition"><ChevronLeft size={16}/></button>
                                                 <span className="text-[10px] font-black text-white whitespace-nowrap">
-                                                    {(post.imageHistory.indexOf(post.imageUrl || '') + 1)} / {post.imageHistory.length}
+                                                    {/* Fixed: Use 'post' instead of 'p' to correctly reference the current post being iterated */}
+                                                    {(post.imageHistory?.indexOf(post.imageUrl || '') + 1) || 1} / {post.imageHistory?.length || 1}
                                                 </span>
                                                 <button onClick={() => handleSwitchVariant(post.id, 'next')} className="text-gray-400 hover:text-white transition"><ChevronRight size={16}/></button>
                                             </div>
                                         )}
 
-                                        {/* AI DEBUG INDICATOR */}
                                         {post.aiDebug && (
                                             <div className="absolute top-3 left-3 flex gap-1 z-40">
                                                 {post.aiDebug.usedReferenceImages && (
@@ -234,7 +238,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                                         <Shield size={10} />
                                                     </div>
                                                 )}
-                                                {post.aiDebug.missingFields.length > 0 && (
+                                                {post.aiDebug.missingFields && post.aiDebug.missingFields.length > 0 && (
                                                     <div className="bg-yellow-500/80 p-1 rounded-lg text-white" title={`Missing context: ${post.aiDebug.missingFields.join(', ')}`}>
                                                         <Info size={10} />
                                                     </div>
