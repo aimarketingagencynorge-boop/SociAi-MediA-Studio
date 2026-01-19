@@ -81,7 +81,7 @@ const App: React.FC = () => {
         setIsSyncing(false);
       } catch (e) {
         console.error("Critical Sync Error:", e);
-        setGlobalError("Connection to Holonet disrupted. Sync failed.");
+        setGlobalError(lang === 'pl' ? "Przerwano połączenie z Holonetem. Synchronizacja nieudana." : "Holonet connection disrupted. Sync failed.");
         setIsSyncing(false);
       }
     }, 1000);
@@ -115,8 +115,8 @@ const App: React.FC = () => {
       setNotifications([welcomeNote]);
       setCurrentView(View.DASHBOARD);
     } catch (e) {
-      console.error("Onboarding failed", e);
-      setGlobalError("Procedura startowa przerwana. Spróbuj ponownie.");
+      console.error("Launch sequence failed", e);
+      setGlobalError(lang === 'pl' ? "Procedura startowa przerwana. Spróbuj ponownie." : "Launch sequence interrupted. Try again.");
     } finally {
       setIsLoading(false);
     }
@@ -271,7 +271,7 @@ const App: React.FC = () => {
                <div className="flex items-center gap-3 bg-cyber-purple/10 border border-cyber-purple/20 px-4 py-1 rounded-full">
                  <BatteryCharging size={16} className="text-cyber-purple" />
                  <span className="text-cyber-purple font-black text-sm uppercase">{credits}</span>
-                 {isSyncing && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse ml-2" title="Syncing to Holonet" />}
+                 {isSyncing && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse ml-2" title={lang === 'pl' ? "Synchronizacja z Holonetem" : "Syncing to Holonet"} />}
                </div>
              )}
            </div>

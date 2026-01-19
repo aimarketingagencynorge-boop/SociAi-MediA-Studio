@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { NeonCard } from './NeonCard';
 import { BrandProfile } from '../types';
@@ -102,7 +101,7 @@ export const Settings: React.FC<SettingsProps> = ({ profile, lang, onUpdateProfi
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 1.5 * 1024 * 1024) {
-        alert("Plik logo jest zbyt duży. Maksymalny rozmiar to 1.5MB.");
+        alert(lang === 'pl' ? "Plik logo jest zbyt duży. Maksymalny rozmiar to 1.5MB." : "Logo file too large. Max size 1.5MB.");
         return;
       }
       const reader = new FileReader();
@@ -117,7 +116,7 @@ export const Settings: React.FC<SettingsProps> = ({ profile, lang, onUpdateProfi
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert("Zdjęcie referencyjne jest zbyt duże. Maksymalny rozmiar to 2MB.");
+        alert(lang === 'pl' ? "Zdjęcie referencyjne jest zbyt duże. Maksymalny rozmiar to 2MB." : "Reference photo too large. Max size 2MB.");
         return;
       }
       if ((formData.styleReferenceUrls?.length || 0) < 3) {
@@ -144,7 +143,7 @@ export const Settings: React.FC<SettingsProps> = ({ profile, lang, onUpdateProfi
     if (formData.phone) parts.push(`📞 Contact: ${formData.phone}`);
     if (formData.address) parts.push(`📍 Address: ${formData.address}`);
 
-    if (parts.length === 0) return <p className="text-[10px] italic text-gray-600">Wprowadź dane kontaktowe powyżej...</p>;
+    if (parts.length === 0) return <p className="text-[10px] italic text-gray-600">{lang === 'pl' ? "Wprowadź dane kontaktowe powyżej..." : "Enter contact details above..."}</p>;
 
     return (
       <div className="mt-4 p-4 bg-black/40 rounded-xl border border-white/5 font-mono text-[11px] text-gray-400 space-y-1 overflow-hidden">
