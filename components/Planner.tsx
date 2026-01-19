@@ -3,7 +3,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { NeonCard } from './NeonCard';
 import { BrandProfile, SocialPost, PostStatus, MediaSource, ContentFormat, ImageGenMode } from '../types';
 import { 
-    Instagram, Facebook, Linkedin, Video, Edit2, Trash2, Image as ImageIcon, Sparkles, CheckCircle2, Upload, Zap, Clock, Plus, X, Dna, Shield, Film, RotateCw, Save, Wand2, Loader2
+    Instagram, Facebook, Linkedin, Video, Edit2, Trash2, Image as ImageIcon, Sparkles, CheckCircle2, Upload, Zap, Clock, Plus, X, Dna, Shield, Film, RotateCw, Save, Wand2, Loader2, Info, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { generateWeeklyStrategy, getFormattedSignature, generateAIImage } from '../services/geminiService';
 import { translations, Language } from '../translations';
@@ -30,10 +30,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
   const [regeneratingPostIds, setRegeneratingPostIds] = useState<Set<string>>(new Set());
   
   const [formats, setFormats] = useState<ContentFormat[]>(DEFAULT_FORMATS);
-  const [editingPostId, setEditingPostId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activePostForUpload, setActivePostForUpload] = useState<{id: string, type: 'image' | 'video'} | null>(null);
 
   const t = translations[lang];
 
@@ -68,7 +65,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
         onUpdatePosts(posts.map(p => p.id === post.id ? {
             ...p,
             imageUrl: result.url,
-            imageHistory: [...(p.imageHistory || []), result.url],
+            imageHistory: [...(p.imageHistory || [p.imageUrl]).filter(Boolean), result.url] as string[],
             variantCount: nextSeed,
             creativeBrief: result.brief,
             aiPrompt: result.prompt,
@@ -83,6 +80,21 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
             return next;
         });
     }
+  };
+
+  const handleSwitchVariant = (postId: string, direction: 'prev' | 'next') => {
+    onUpdatePosts(posts.map(p => {
+        if (p.id === postId && p.imageHistory && p.imageHistory.length > 1) {
+            const currentIndex = p.imageHistory.indexOf(p.imageUrl || '');
+            let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+            
+            if (nextIndex >= p.imageHistory.length) nextIndex = 0;
+            if (nextIndex < 0) nextIndex = p.imageHistory.length - 1;
+            
+            return { ...p, imageUrl: p.imageHistory[nextIndex] };
+        }
+        return p;
+    }));
   };
 
   const handleGenerateWeekly = async () => {
@@ -103,7 +115,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
 
   return (
     <div className="space-y-8 animate-fadeIn pb-24 md:pb-20 px-2 md:px-0">
-      <input type="file" ref={fileInputRef} onChange={(e) => {}} className="hidden" />
+      <input type="file" ref={fileInputRef} onChange={() => {}} className="hidden" />
 
       {genModal && (
         <GenerationModal 
@@ -120,11 +132,12 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                 creativeBrief: brief,
                 aiPrompt,
                 aiMode: mode,
-                imageHistory: [url],
-                variantCount: 0,
+                imageHistory: [...(p.imageHistory || []), url],
+                variantCount: (p.variantCount || 0),
                 aiDebug
               } : p));
-              onUpdateCredits(genModal.type === 'image' ? -5 : -25);
+              // Note: credits already deducted by handleRegenerateImage if called from there
+              // This onSuccess is shared with the first-time generator in the modal.
           }}
         />
       )}
@@ -161,7 +174,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                 </div>
                             </div>
 
-                            <div className="bg-black/40 p-5 rounded-2xl border border-white/5 mb-5 group min-h-[100px]">
+                            <div className="bg-black/40 p-5 rounded-2xl border border-white/5 mb-5 group min-h-[100px] relative">
                                 <p className="text-xs md:text-sm text-gray-200 italic whitespace-pre-wrap">"{post.content}"</p>
                             </div>
 
@@ -184,26 +197,41 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                             </div>
                                         )}
 
-                                        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover/img:opacity-100 transition-opacity">
-                                            <button 
-                                                onClick={() => handleRegenerateImage(post)}
-                                                disabled={regeneratingPostIds.has(post.id)}
-                                                className="p-3 bg-black/60 backdrop-blur-md rounded-full text-white hover:text-cyber-turquoise hover:scale-110 transition shadow-xl"
-                                                title="Regenerate Variant"
-                                            >
-                                                <RotateCw size={18} className={regeneratingPostIds.has(post.id) ? 'animate-spin' : ''} />
-                                            </button>
+                                        {/* Overlay Controls */}
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    onClick={() => setGenModal({type: 'image', prompt: post.content, postId: post.id})}
+                                                    className="p-3 bg-white/10 backdrop-blur-md rounded-xl text-white hover:bg-cyber-purple transition flex flex-col items-center gap-1"
+                                                >
+                                                    <Edit2 size={18} />
+                                                    <span className="text-[8px] font-black uppercase">{t.edit}</span>
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleRegenerateImage(post)}
+                                                    disabled={regeneratingPostIds.has(post.id)}
+                                                    className="p-3 bg-white/10 backdrop-blur-md rounded-xl text-white hover:bg-cyber-magenta transition flex flex-col items-center gap-1"
+                                                >
+                                                    <RotateCw size={18} className={regeneratingPostIds.has(post.id) ? 'animate-spin' : ''} />
+                                                    <span className="text-[8px] font-black uppercase">{t.addMorePower}</span>
+                                                </button>
+                                            </div>
                                         </div>
 
-                                        {post.variantCount !== undefined && post.variantCount > 0 && (
-                                            <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                                                <span className="text-[9px] font-black text-white uppercase tracking-widest">Variant v{post.variantCount + 1}</span>
+                                        {/* Variant Selector */}
+                                        {post.imageHistory && post.imageHistory.length > 1 && (
+                                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 z-20">
+                                                <button onClick={() => handleSwitchVariant(post.id, 'prev')} className="text-gray-400 hover:text-white"><ChevronLeft size={16}/></button>
+                                                <span className="text-[10px] font-black text-white whitespace-nowrap">
+                                                    {(post.imageHistory.indexOf(post.imageUrl || '') + 1)} / {post.imageHistory.length}
+                                                </span>
+                                                <button onClick={() => handleSwitchVariant(post.id, 'next')} className="text-gray-400 hover:text-white"><ChevronRight size={16}/></button>
                                             </div>
                                         )}
 
                                         {/* AI DEBUG INDICATOR */}
                                         {post.aiDebug && (
-                                            <div className="absolute top-3 left-3 flex gap-1">
+                                            <div className="absolute top-3 left-3 flex gap-1 z-20">
                                                 {post.aiDebug.usedReferenceImages && (
                                                     <div className="bg-green-500/80 p-1 rounded-lg text-white" title="Used Ref Style Assets">
                                                         <Shield size={10} />
@@ -242,6 +270,3 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
     </div>
   );
 };
-
-// Dodatkowe ikony pomocnicze dla UI debugu
-const Info = ({size}: {size: number}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>;

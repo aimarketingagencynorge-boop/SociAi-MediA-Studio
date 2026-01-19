@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { translations, Language } from '../translations';
-import { X, Sparkles, Download, CheckCircle, Terminal, AlertCircle, Key, Camera, Layout, RotateCw } from 'lucide-react';
+import { X, Sparkles, Download, CheckCircle, Terminal, AlertCircle, Key, Camera, Layout, RotateCw, Loader2 } from 'lucide-react';
 import { generateAIImage, generateAIVideo } from '../services/geminiService';
 import { BrandProfile, ImageGenMode } from '../types';
 
@@ -32,7 +33,10 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
     }
 
     setIsGenerating(true);
-    setIsDone(false);
+    // Don't set isDone to false if we are just regenerating in the success state
+    // so we can keep showing the old result until the new one is ready
+    if (seed === 0) setIsDone(false); 
+    
     setNeedsKey(false);
     setError(null);
     setLogs(prev => [...prev, `[SYS] ${seed > 0 ? 'Recalibrating' : 'Initiating'} ${type} engine (Seed: ${seed})...`]);
@@ -62,7 +66,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
     }
   };
 
-  const handleRecalibrate = () => {
+  const handleRegenerate = () => {
     const nextSeed = variantCount + 1;
     setVariantCount(nextSeed);
     handleStartGeneration(true, nextSeed);
@@ -86,7 +90,12 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
             <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-center flex flex-col items-center gap-4">
               <AlertCircle size={32} />
               <p className="font-bold uppercase tracking-widest">{error}</p>
-              <button onClick={() => handleStartGeneration(false, variantCount)} className="px-6 py-2 bg-red-500 text-white rounded-lg font-black text-[10px] uppercase">TRY AGAIN</button>
+              <button 
+                onClick={() => handleStartGeneration(false, variantCount)} 
+                className="px-6 py-2 bg-red-500 text-white rounded-lg font-black text-[10px] uppercase hover:bg-red-600 transition"
+              >
+                TRY AGAIN
+              </button>
             </div>
           )}
 
@@ -101,54 +110,74 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
                         className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 ${mode === 'PHOTO' ? 'border-cyber-turquoise bg-cyber-turquoise/10 text-cyber-turquoise' : 'border-white/10 text-gray-500'}`}
                     >
                         <Camera size={24} />
-                        <span className="text-[10px] font-black uppercase">PHOTO</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">PHOTO</span>
                     </button>
                     <button 
                         onClick={() => setMode('POSTER')}
                         className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 ${mode === 'POSTER' ? 'border-cyber-magenta bg-cyber-magenta/10 text-cyber-magenta' : 'border-white/10 text-gray-500'}`}
                     >
                         <Layout size={24} />
-                        <span className="text-[10px] font-black uppercase">POSTER</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">POSTER</span>
                     </button>
                 </div>
               )}
 
               <button 
                 onClick={() => handleStartGeneration()}
-                className="w-full py-4 bg-cyber-purple text-white font-black rounded-xl hover:bg-cyber-magenta transition uppercase tracking-widest"
+                className="w-full py-4 bg-cyber-purple text-white font-black rounded-xl hover:bg-cyber-magenta transition uppercase tracking-widest shadow-[0_0_20px_rgba(140,77,255,0.3)]"
               >
                 Launch {type} Engine
               </button>
             </div>
-          ) : isGenerating && !isDone ? (
-            <div className="space-y-6">
+          ) : isGenerating ? (
+            <div className="space-y-6 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative">
+                    <Loader2 size={48} className="text-cyber-purple animate-spin" />
+                    <div className="absolute inset-0 blur-xl bg-cyber-purple/20 animate-pulse rounded-full"></div>
+                  </div>
+                  <h3 className="font-futuristic font-bold text-white uppercase tracking-widest">{t.genWorking}</h3>
+                </div>
+                
                 <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                   <div className="h-full bg-cyber-purple transition-all duration-300" style={{ width: `${progress}%` }} />
                 </div>
-                <div className="bg-black/50 rounded-xl p-4 font-mono text-[9px] text-green-400 h-40 overflow-y-auto">
+                <div className="bg-black/50 rounded-xl p-4 font-mono text-[9px] text-green-400 h-32 overflow-y-auto text-left">
                     {logs.map((log, i) => <div key={i}>{log}</div>)}
                     <div className="animate-pulse">_ Generating variant...</div>
                 </div>
             </div>
           ) : isDone && (
             <div className="text-center space-y-6 animate-fadeIn">
-               <div className="aspect-video w-full rounded-2xl bg-white/5 border border-white/10 overflow-hidden relative group">
-                  {type === 'image' ? <img src={resultUrl!} className="w-full h-full object-cover" /> : <video src={resultUrl!} controls className="w-full h-full object-cover" />}
+               <div className="flex flex-col items-center gap-2 mb-4">
+                  <div className="w-12 h-12 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center">
+                    <CheckCircle size={24} />
+                  </div>
+                  <h3 className="text-xl font-futuristic font-bold text-white uppercase tracking-tighter">{t.genComplete}</h3>
+               </div>
+
+               <div className="aspect-video w-full rounded-2xl bg-white/5 border border-white/10 overflow-hidden relative group shadow-2xl">
+                  {type === 'image' ? (
+                    <img src={resultUrl!} className="w-full h-full object-cover" />
+                  ) : (
+                    <video src={resultUrl!} controls className="w-full h-full object-cover" />
+                  )}
                </div>
                
-               <div className="flex gap-4">
+               <div className="space-y-3">
                   <button 
-                    onClick={onClose} 
-                    className="flex-1 py-4 bg-white/5 border border-white/10 text-gray-400 hover:text-white rounded-xl font-bold uppercase transition"
+                    onClick={handleRegenerate}
+                    disabled={isGenerating}
+                    className="w-full py-4 bg-cyber-purple text-white rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-cyber-magenta shadow-[0_0_20px_rgba(140,77,255,0.3)] transition-all disabled:opacity-50"
                   >
-                    {t.close}
+                    <RotateCw size={18} className={isGenerating ? 'animate-spin' : ''} />
+                    {t.addMorePower}
                   </button>
                   <button 
-                    onClick={handleRecalibrate}
-                    className="flex-1 py-4 bg-cyber-purple text-white rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-cyber-magenta shadow-[0_0_20px_rgba(140,77,255,0.3)] transition-all"
+                    onClick={onClose} 
+                    className="w-full py-3 text-gray-400 hover:text-white rounded-xl font-bold uppercase transition bg-white/5 border border-white/5"
                   >
-                    <RotateCw size={18} />
-                    {t.recalibrateHolocron}
+                    OK / CLOSE
                   </button>
                </div>
             </div>

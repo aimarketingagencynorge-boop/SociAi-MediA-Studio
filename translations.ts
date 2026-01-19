@@ -1,3 +1,4 @@
+
 export type Language = 'pl' | 'en';
 
 export const translations = {
@@ -136,6 +137,8 @@ export const translations = {
     backToHome: "Powróć na stronę główną",
     poweredBy: "Zasilane przez Gemini 2.5 Flash",
     recalibrateHolocron: "REKALIBRUJ HOLOKRON",
+    addMorePower: "DODAJ WIĘCEJ MOCY",
+    edit: "EDYTUJ",
     features: {
       starter: ["100 Kredytów", "1 Platforma", "Analityka"],
       pro: ["1000 Kredytów", "Wszystkie Platformy", "Wideo AI", "Iskry Mocy"],
@@ -277,6 +280,8 @@ export const translations = {
     backToHome: "Back to Home",
     poweredBy: "Powered by Gemini 2.5 Flash",
     recalibrateHolocron: "RECALIBRATE HOLOCRON",
+    addMorePower: "ADD MORE POWER",
+    edit: "EDIT",
     features: {
       starter: ["100 Credits", "1 Platform", "Analytics"],
       pro: ["1000 Credits", "All Platforms", "AI Video", "Force Sparks"],
