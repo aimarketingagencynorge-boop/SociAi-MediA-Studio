@@ -53,7 +53,8 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
       status: 'draft',
       mediaSource: 'ai_generated'
     };
-    onUpdatePosts(prev => [newPost, ...prev]);
+    // Explicit type for prev to resolve unknown map error
+    onUpdatePosts((prev: SocialPost[]) => [newPost, ...prev]);
   };
 
   const handleRegenerateImage = async (post: SocialPost) => {
@@ -63,7 +64,8 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
     try {
         const nextSeed = (post.variantCount || 0) + 1;
         const result = await generateAIImage(post.content, profile, post.platform, post.aiMode || 'PHOTO', nextSeed);
-        onUpdatePosts(prev => prev.map(p => p.id === post.id ? {
+        // Explicit type for prev to resolve unknown map error
+        onUpdatePosts((prev: SocialPost[]) => prev.map(p => p.id === post.id ? {
             ...p,
             imageUrl: result.url,
             imageHistory: [...new Set([...(p.imageHistory || []), result.url])],
@@ -79,7 +81,8 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
   };
 
   const handleSwitchVariant = (postId: string, direction: 'prev' | 'next') => {
-    onUpdatePosts(prev => prev.map(p => {
+    // Explicit type for prev to resolve unknown map error
+    onUpdatePosts((prev: SocialPost[]) => prev.map(p => {
         if (p.id === postId && p.imageHistory && p.imageHistory.length > 1) {
             const currentIndex = p.imageHistory.indexOf(p.imageUrl || '');
             let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
@@ -96,7 +99,8 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
     onUpdateCredits(-50); 
     try {
         const newPosts = await generateWeeklyStrategy(profile, lang, formats);
-        onUpdatePosts(prev => [...prev, ...newPosts]);
+        // Explicit type for prev to resolve unknown map error
+        onUpdatePosts((prev: SocialPost[]) => [...prev, ...newPosts]);
     } catch (e) { console.error(e); } finally { setIsWeeklyGenActive(false); }
   };
 
@@ -107,7 +111,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
     tiktok: <Video size={16} className="text-cyber-turquoise" />
   };
 
-  // Fixed map error by using functional update and ensuring genModal context is captured safely
+  // Fixed type to support functional updates and avoid 'unknown' map error
   const handleSuccessUpdate = (url: string, brief?: any, aiPrompt?: string, mode?: ImageGenMode, aiDebug?: any) => {
     if (!genModal) return;
     // Fix: Explicitly typing 'prev' as SocialPost[] to resolve the "Property 'map' does not exist on type 'unknown'" error.
@@ -184,7 +188,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                     <div className="p-2 bg-white/5 rounded-xl border border-white/10">{platformIcons[post.platform as keyof typeof platformIcons]}</div>
                                     <span className="text-[10px] uppercase font-black tracking-[0.2em] text-gray-500">{post.platform}</span>
                                 </div>
-                                <button onClick={() => onUpdatePosts(prev => prev.map(p => p.id === post.id ? {...p, status: 'approved'} : p))} className="text-[10px] font-black text-cyber-turquoise uppercase bg-cyber-turquoise/5 px-3 py-1.5 rounded-lg border border-cyber-turquoise/30">
+                                <button onClick={() => onUpdatePosts((prev: SocialPost[]) => prev.map(p => p.id === post.id ? {...p, status: 'approved'} : p))} className="text-[10px] font-black text-cyber-turquoise uppercase bg-cyber-turquoise/5 px-3 py-1.5 rounded-lg border border-cyber-turquoise/30">
                                     <Sparkles size={14} /> {t.approve}
                                 </button>
                             </div>
@@ -210,7 +214,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                     <div className="flex items-center justify-between pt-4 border-t border-white/5">
                                         <div className="flex items-center gap-3">
                                             <button onClick={() => setGenModal({type: post.videoUrl ? 'video' : 'image', prompt: post.content, postId: post.id, initialUrl: post.imageUrl || post.videoUrl})} className="p-1 text-gray-500 hover:text-white"><Edit2 size={20} /></button>
-                                            <button onClick={() => onUpdatePosts(prev => prev.filter(p => p.id !== post.id))} className="p-1 text-gray-500 hover:text-red-400"><Trash2 size={20} /></button>
+                                            <button onClick={() => onUpdatePosts((prev: SocialPost[]) => prev.filter(p => p.id !== post.id))} className="p-1 text-gray-500 hover:text-red-400"><Trash2 size={20} /></button>
                                         </div>
                                         <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black text-gray-400 uppercase tracking-widest">Format: {post.format || 'STANDARD'}</div>
                                     </div>

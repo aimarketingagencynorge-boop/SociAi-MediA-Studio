@@ -10,7 +10,7 @@ const prepareImagePart = (dataUrl: string) => {
     const [header, data] = dataUrl.split(',');
     const mimeMatch = header.match(/:(.*?);/);
     const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
-    const cleanData = data.replace(/\s/g, ''); // Fix błędu 400 - usuwanie spacji/nowych linii
+    const cleanData = data.replace(/\s/g, ''); 
 
     return {
       inlineData: {
@@ -52,7 +52,6 @@ export const generateAIImage = async (
 ): Promise<{url: string, brief: any, prompt: string, debug: any}> => {
     const ai = getAI();
     
-    // Step 1: Creative Briefing
     const briefPrompt = `Create a visual brief for: "${postContent}". Brand: ${profile.name}. Style: ${mode}. Seed: ${variantSeed}. Return JSON with "main_subject", "palette" (5 hex), "mood".`;
     const briefRes = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -63,7 +62,6 @@ export const generateAIImage = async (
     console.log("[JedAi Pipeline] Creative Brief:", brief);
 
     const parts: any[] = [];
-    // Dodajemy tylko 1 obraz referencyjny dla stabilności (Bug 400 fix)
     if (profile.styleReferenceUrls?.[0]) {
         const part = prepareImagePart(profile.styleReferenceUrls[0]);
         if (part) parts.push(part);
@@ -121,16 +119,21 @@ export const generateAIVideo = async (prompt: string, profile: BrandProfile, edi
 export const analyzeBrandIdentity = async (name: string, website?: string, deepScan: boolean = false): Promise<any> => {
   const ai = getAI();
   
-  const strategyPrompt = `Perform a ${deepScan ? 'DEEP' : 'STANDARD'} website scan and brand analysis for "${name}" at ${website || 'web'}.
-  Follow this 3-step strategy:
-  1. METADATA SCAN: Extract OG tags, Meta description, JSON-LD Organization data.
-  2. LOGO FALLBACK: Locate high-res logos, favicons, or touch icons.
-  3. DEEP SCAN (if requested): Analyze homepage structure, hero sections, and visual hierarchy.
+  const strategyPrompt = `You are a world-class Brand Data Extractor. 
+  TASK: Perform a ${deepScan ? 'DEEP SCAN (high accuracy)' : 'STANDARD SCAN (fast)'} for the brand "${name}" using the provided website URL: ${website || 'web'}.
+  
+  FALLBACK STRATEGY (MUST EXECUTE):
+  1. METADATA SCAN: Use Google Search to crawl the website's raw metadata. Look for Open Graph tags (og:site_name, og:title, og:description, og:image), meta description, and page <title>. Extract JSON-LD (application/ld+json) to find the official Organization name, logo, and social links (instagram, linkedin, etc).
+  2. LOGO FALLBACK: If og:image is not found, search for apple-touch-icon, favicons, or common logo paths like /logo.png.
+  3. DEEP SCAN (if deepScan is true): Analyze search results for hero section text, H1 headers, and mission statements. Use this to determine industry and keywords.
 
-  Return a JSON object exactly matching this structure:
+  MANDATORY: Return a REAL logo URL, a detailed description, and a confidence score (0-100).
+  If data is low quality, set status to "partial" but ALWAYS fill the fields as much as possible.
+
+  Return a JSON object matching this structure:
   {
     "status": "success" | "partial" | "failed",
-    "confidence": number (0-100),
+    "confidence": number,
     "method": "meta" | "favicon" | "headless",
     "brand": {
       "name": string,
@@ -139,7 +142,7 @@ export const analyzeBrandIdentity = async (name: string, website?: string, deepS
       "website": string,
       "industry": string,
       "keywords": string[],
-      "primaryColor": string (hex),
+      "primaryColor": string,
       "socials": {
         "instagram": string,
         "facebook": string,
@@ -155,7 +158,7 @@ export const analyzeBrandIdentity = async (name: string, website?: string, deepS
 
   try {
     const res = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-pro-preview",
       contents: strategyPrompt,
       config: { 
         tools: [{ googleSearch: {} }], 

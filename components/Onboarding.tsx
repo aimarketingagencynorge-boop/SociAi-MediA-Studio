@@ -69,20 +69,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
         const result = await analyzeBrandIdentity(profile.name || 'Brand', profile.website, deep);
         console.info("[SociAI Diagnostic] Scan Result:", result);
         setScanResult(result);
-        
-        // Auto-fill logic
-        if (result.status !== 'failed' && result.brand) {
-          setProfile(prev => ({
-            ...prev,
-            name: result.brand.name || prev.name,
-            website: result.brand.website || prev.website,
-            industry: result.brand.industry || prev.industry,
-            primaryColor: result.brand.primaryColor || prev.primaryColor,
-            logoUrl: result.brand.logoUrl || prev.logoUrl,
-            businessDescription: result.brand.description || prev.businessDescription,
-            targetAudience: result.brand.industry ? `People interested in ${result.brand.industry}` : prev.targetAudience
-          }));
-        }
     } catch (e) {
         console.error("[SociAI Diagnostic] Scan error:", e);
         setScanResult({
@@ -95,6 +81,23 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
     } finally {
         setIsScanning(false);
     }
+  };
+
+  const handleAutoFill = () => {
+    if (!scanResult) return;
+    
+    setProfile(prev => ({
+      ...prev,
+      name: scanResult.brand.name || prev.name,
+      website: scanResult.brand.website || prev.website,
+      industry: scanResult.brand.industry || prev.industry,
+      primaryColor: scanResult.brand.primaryColor || prev.primaryColor,
+      logoUrl: scanResult.brand.logoUrl || prev.logoUrl,
+      businessDescription: scanResult.brand.description || prev.businessDescription,
+      targetAudience: scanResult.brand.industry ? `People interested in ${scanResult.brand.industry}` : prev.targetAudience
+    }));
+
+    setStep(3); // Move to verification step
   };
 
   const handleAccountCreation = () => {
@@ -266,6 +269,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
                           {scanResult.brand.socials.instagram && <Instagram size={12} className="text-pink-500" />}
                           {scanResult.brand.socials.facebook && <Facebook size={12} className="text-blue-500" />}
                           {scanResult.brand.socials.linkedin && <Linkedin size={12} className="text-blue-700" />}
+                          {scanResult.brand.socials.youtube && <Youtube size={12} className="text-red-500" />}
                         </div>
                       </div>
                     </div>
@@ -279,30 +283,32 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
                       </div>
                     )}
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <button 
-                        onClick={() => setStep(3)}
-                        className="flex-1 py-3 bg-white/5 border border-white/10 hover:border-cyber-turquoise/50 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition"
+                        onClick={handleAutoFill}
+                        className="flex-1 py-4 bg-cyber-purple text-white rounded-xl text-xs font-black uppercase tracking-widest transition shadow-lg shadow-cyber-purple/20 hover:bg-cyber-magenta"
                       >
-                        Auto-fill data
+                        Auto-fill detected data
                       </button>
                       <button 
                         onClick={() => handleStartScan(true)}
-                        className="px-4 py-3 bg-cyber-purple/10 border border-cyber-purple/30 text-cyber-purple rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-cyber-purple hover:text-white transition flex items-center gap-2"
+                        className="px-6 py-4 bg-white/5 border border-white/10 text-gray-400 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-white/10 hover:text-white transition flex items-center justify-center gap-2"
                       >
-                        <Cpu size={12} /> Force Deep Scan
+                        <Cpu size={14} /> Force Deep Scan
                       </button>
                     </div>
                   </div>
                 )}
 
-                <button 
-                  onClick={() => handleStartScan(false)} 
-                  disabled={!profile.name && !profile.website}
-                  className="w-full bg-cyber-purple py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyber-magenta transition disabled:opacity-50 shadow-lg shadow-cyber-purple/20 uppercase tracking-widest"
-                >
-                  {scanResult ? t.nextStep : "SCAN WEBSITE"} <ArrowRight size={20} />
-                </button>
+                {!scanResult && (
+                  <button 
+                    onClick={() => handleStartScan(false)} 
+                    disabled={!profile.name && !profile.website}
+                    className="w-full bg-cyber-purple py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyber-magenta transition disabled:opacity-50 shadow-lg shadow-cyber-purple/20 uppercase tracking-widest"
+                  >
+                    SCAN WEBSITE <ArrowRight size={20} />
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -325,13 +331,13 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest">Brand Visuals</label>
                     <div className="flex gap-4 items-center">
                         {profile.logoUrl ? (
-                            <img src={profile.logoUrl} className="w-20 h-20 rounded-2xl border border-white/10 shadow-xl object-contain bg-black/20" alt="Logo" />
+                            <img src={profile.logoUrl} className="w-20 h-20 rounded-2xl border border-white/10 shadow-xl object-contain bg-black/20 p-2" alt="Logo" />
                         ) : (
                             <div className="w-20 h-20 bg-white/5 rounded-2xl border border-dashed border-white/20 flex items-center justify-center text-gray-600">Logo</div>
                         )}
                         <div className="space-y-2">
                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full border border-white/20" style={{ backgroundColor: profile.primaryColor }} />
+                                <div className="w-6 h-6 rounded-full border border-white/20 shadow-lg" style={{ backgroundColor: profile.primaryColor }} />
                                 <span className="text-xs font-mono text-gray-400 uppercase">{profile.primaryColor}</span>
                              </div>
                         </div>
@@ -373,7 +379,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
               />
             </div>
 
-            <button onClick={() => setStep(2)} className="w-full bg-cyber-purple py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyber-magenta transition-all uppercase tracking-widest">
+            <button onClick={() => setStep(2)} className="w-full bg-cyber-purple py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyber-magenta transition-all uppercase tracking-widest shadow-lg shadow-cyber-purple/20">
               {t.nextStep} <ArrowRight size={20} />
             </button>
           </div>
@@ -415,7 +421,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
               </div>
             </div>
 
-            <button onClick={() => setStep(4)} className="w-full bg-cyber-purple py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyber-magenta transition-all uppercase tracking-widest">
+            <button onClick={() => setStep(4)} className="w-full bg-cyber-purple py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyber-magenta transition-all uppercase tracking-widest shadow-lg shadow-cyber-purple/20">
               {t.nextStep} <ArrowRight size={20} />
             </button>
           </div>
