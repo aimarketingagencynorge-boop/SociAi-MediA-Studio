@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { translations, Language } from '../translations';
 import { X, Sparkles, CheckCircle, AlertCircle, Camera, Layout, RotateCw, Loader2, MessageSquare, Info } from 'lucide-react';
@@ -32,10 +33,21 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
   const [logs, setLogs] = useState<string[]>([]);
   const [resultUrl, setResultUrl] = useState<string | null>(initialImageUrl || null);
   const [mode, setMode] = useState<ImageGenMode>('PHOTO');
-  const [variantCount, setVariantCount] = useState(0);
   const [editInstruction, setEditInstruction] = useState('');
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
+
+  // Mandatory API Key selection for Veo models as per guidelines
+  const checkApiKeyAndStart = async () => {
+    if (type === 'video' && typeof (window as any).aistudio !== 'undefined') {
+      const hasKey = await (window as any).aistudio.hasSelectedApiKey();
+      if (!hasKey) {
+        await (window as any).aistudio.openSelectKey();
+        // GUIDELINE: Assume the key selection was successful after triggering openSelectKey() and proceed.
+      }
+    }
+    handleStartGeneration();
+  };
 
   const handleStartGeneration = async (seed: number = 0) => {
     setIsGenerating(true);
@@ -59,11 +71,22 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
         setIsDone(true);
         onSuccess(result.url, result.brief, result.prompt, mode, result.debug);
       } else if (type === 'video' && brandContext) {
-        const result = await generateAIVideo(prompt, brandContext, editInstruction);
-        setResultUrl(result.url);
-        setDebugData(result.debug);
-        setIsDone(true);
-        onSuccess(result.url, null, null, undefined, result.debug);
+        try {
+          const result = await generateAIVideo(prompt, brandContext, editInstruction);
+          setResultUrl(result.url);
+          setDebugData(result.debug);
+          setIsDone(true);
+          onSuccess(result.url, null, null, undefined, result.debug);
+        } catch (videoError: any) {
+          // GUIDELINE: If request fails with "Requested entity was not found.", reset key selection and prompt again.
+          if (videoError.message?.includes("Requested entity was not found")) {
+             if (typeof (window as any).aistudio !== 'undefined') {
+                await (window as any).aistudio.openSelectKey();
+             }
+             throw new Error("Wymagana re-autoryzacja klucza API. Wybierz projekt z aktywnym bilingiem.");
+          }
+          throw videoError;
+        }
       }
     } catch (e: any) {
       setError(e.message || "Błąd połączenia z siecią neuronową.");
@@ -90,7 +113,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
             <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-center flex flex-col items-center gap-4">
               <AlertCircle size={32} />
               <p className="font-bold uppercase tracking-widest text-xs">{error}</p>
-              <button onClick={() => handleStartGeneration()} className="px-6 py-2 bg-red-500 text-white rounded-lg font-black text-[10px] uppercase">PONÓW PRÓBĘ</button>
+              <button onClick={() => checkApiKeyAndStart()} className="px-6 py-2 bg-red-500 text-white rounded-lg font-black text-[10px] uppercase">PONÓW PRÓBĘ</button>
             </div>
           )}
 
@@ -109,7 +132,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ type, prompt, 
                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2"><MessageSquare size={12} /> Instrukcje edycji</label>
                 <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-gray-300 h-20" placeholder="Np. cieplejsze barwy..." value={editInstruction} onChange={e => setEditInstruction(e.target.value)} />
               </div>
-              <button onClick={() => handleStartGeneration()} className="w-full py-4 bg-cyber-purple text-white font-black rounded-xl uppercase tracking-widest shadow-lg">START SILNIKA {type.toUpperCase()}</button>
+              <button onClick={() => checkApiKeyAndStart()} className="w-full py-4 bg-cyber-purple text-white font-black rounded-xl uppercase tracking-widest shadow-lg">START SILNIKA {type.toUpperCase()}</button>
             </div>
           ) : isGenerating ? (
             <div className="space-y-6 text-center py-10">

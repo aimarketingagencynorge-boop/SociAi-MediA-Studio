@@ -3,7 +3,7 @@ export type Language = 'pl' | 'en';
 export const translations = {
   pl: {
     heroTitle: "SociAI MediA Studio",
-    heroSubtitle: "Twój AI Social Media Manager 24/7. Niech Moc AI będzie z Tobą.",
+    heroSubtitle: "Twój AI Social Media Manager 24/7. Niech moc AI będzie z Tobą.",
     getStarted: "ROZPOCZNIJ MISJĘ",
     login: "ZALOGUJ SIĘ",
     engineering: "KALIBRACJA CENTRUM DOWODZENIA",
@@ -137,8 +137,8 @@ export const translations = {
     poweredBy: "Zasilane przez Gemini 2.5 Flash",
     recalibrateHolocron: "REKALIBRUJ HOLOKRON",
     addMorePower: "DODAJ WIĘCEJ MOCY",
-    editInstructionLabel: "Co chcesz zmienić?",
-    editInstructionPlaceholder: "Np. mniej czerwieni, pokaż produkt z bliska, bardziej naturalne światło...",
+    editInstructionLabel: "What to change?",
+    editInstructionPlaceholder: "E.g. less red, close-up product shot, more natural lighting...",
     edit: "EDYTUJ",
     features: {
       starter: ["100 Kredytów", "1 Platforma", "Analityka"],
@@ -148,8 +148,8 @@ export const translations = {
   },
   en: {
     heroTitle: "SociAI MediA Studio",
-    heroSubtitle: "Your 24/7 AI Social Media Manager. May the AI be with You.",
-    getStarted: "START MISSION",
+    heroSubtitle: "Your AI Social Media Manager 24/7. May the AI be with you.",
+    getStarted: "START YOUR MISSION",
     login: "LOG IN",
     engineering: "CALIBRATING COMMAND CENTER",
     connecting: "Connecting to SociAI relays...",

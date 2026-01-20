@@ -95,7 +95,53 @@ const App: React.FC = () => {
     if (isLoading) return <div className="flex flex-col items-center justify-center min-h-[60vh] animate-pulse"><Loader2 size={48} className="animate-spin text-cyber-purple mb-4" /><h2 className="uppercase font-futuristic font-bold">Inicjacja systemów...</h2></div>;
     
     switch (currentView) {
-      case View.LANDING: return <div className="text-center py-40 space-y-10"><h1 className="text-8xl font-black uppercase tracking-tighter neon-text-purple">SociAI MediA</h1><p className="text-2xl text-gray-400 uppercase tracking-widest">{t.heroSubtitle}</p><div className="flex justify-center gap-6"><button onClick={() => setCurrentView(View.ONBOARDING)} className="px-10 py-5 bg-cyber-purple rounded-full font-black text-xl uppercase tracking-widest hover:scale-105 transition shadow-2xl">{t.getStarted}</button></div></div>;
+      case View.LANDING: 
+        return (
+          <div className="flex flex-col items-center justify-center min-h-[85vh] text-center space-y-12 animate-fadeIn px-4">
+            <div className="space-y-4">
+              <div className="flex flex-col items-center">
+                <h1 className="text-7xl md:text-9xl font-black tracking-tighter font-futuristic neon-text-cyan leading-none">
+                  SociAI
+                </h1>
+                <div className="flex items-center gap-4 mt-2">
+                  <svg width="40" height="40" viewBox="0 0 100 100" className="drop-shadow-[0_0_10px_rgba(52,224,247,0.5)]">
+                    <circle cx="50" cy="20" r="12" fill="#8C4DFF" />
+                    <circle cx="20" cy="80" r="12" fill="#34E0F7" />
+                    <circle cx="80" cy="80" r="12" fill="#34E0F7" />
+                    <line x1="50" y1="20" x2="20" y2="80" stroke="white" strokeWidth="4" strokeOpacity="0.4" />
+                    <line x1="50" y1="20" x2="80" y2="80" stroke="white" strokeWidth="4" strokeOpacity="0.4" />
+                    <line x1="20" y1="80" x2="80" y2="80" stroke="white" strokeWidth="4" strokeOpacity="0.4" />
+                  </svg>
+                  <div className="relative">
+                    <h2 className="text-3xl md:text-5xl font-black tracking-widest font-futuristic text-white uppercase flex items-center gap-2">
+                      Medi<span className="text-cyber-magenta">A</span> Studio
+                    </h2>
+                    <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-cyber-purple via-cyber-magenta to-transparent rounded-full" />
+                  </div>
+                </div>
+              </div>
+              <p className="text-lg md:text-xl text-gray-300 font-medium max-w-2xl mx-auto pt-6 tracking-wide">
+                {t.heroSubtitle}
+              </p>
+            </div>
+            
+            <div className="flex flex-col items-center gap-20">
+              <button 
+                onClick={() => setCurrentView(View.ONBOARDING)} 
+                className="px-14 py-6 bg-gradient-to-r from-cyber-purple to-cyber-turquoise hover:from-cyber-magenta hover:to-cyber-purple rounded-full font-black text-xl uppercase tracking-[0.25em] hover:scale-105 hover:shadow-[0_0_40px_rgba(52,224,247,0.5)] transition-all duration-300 shadow-2xl relative group"
+              >
+                <span className="relative z-10">{t.getStarted}</span>
+                <div className="absolute inset-0 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
+              </button>
+              
+              <div className="pt-10">
+                <p className="text-[10px] text-gray-500 uppercase tracking-[0.5em] font-black opacity-60">
+                  Powered by usetheforce.ai & Gemini
+                </p>
+              </div>
+            </div>
+          </div>
+        );
       case View.AUTH: return <Auth lang={lang} onLogin={(p) => { setProfile(p); setIsLoggedIn(true); localStorage.setItem('sociai_session_email', p.email!); setPosts(dbService.getTransmissions(p.email!)); setCurrentView(View.DASHBOARD); }} onSignup={() => setCurrentView(View.ONBOARDING)} />;
       case View.ONBOARDING: return <Onboarding onComplete={handleOnboardingComplete} lang={lang} />;
       case View.DASHBOARD: return <Dashboard lang={lang} />;
