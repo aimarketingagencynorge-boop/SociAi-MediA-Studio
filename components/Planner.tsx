@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef } from 'react';
 import { NeonCard } from './NeonCard';
 import { BrandProfile, SocialPost, ContentFormat, ImageGenMode } from '../types';
@@ -111,8 +110,8 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
   // Fixed map error by using functional update and ensuring genModal context is captured safely
   const handleSuccessUpdate = (url: string, brief?: any, aiPrompt?: string, mode?: ImageGenMode, aiDebug?: any) => {
     if (!genModal) return;
-    // Fix: Removed explicit type annotation from prevPosts to resolve "Property 'map' does not exist on type 'unknown'"
-    onUpdatePosts(prev => prev.map(p => p.id === genModal.postId ? {
+    // Fix: Explicitly typing 'prev' as SocialPost[] to resolve the "Property 'map' does not exist on type 'unknown'" error.
+    onUpdatePosts((prev: SocialPost[]) => prev.map(p => p.id === genModal.postId ? {
       ...p,
       imageUrl: genModal.type === 'image' ? url : p.imageUrl,
       videoUrl: genModal.type === 'video' ? url : p.videoUrl,

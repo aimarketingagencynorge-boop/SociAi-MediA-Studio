@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NeonCard } from './NeonCard';
 import { BrandProfile } from '../types';
-import { ArrowRight, Sparkles, Zap, Search, Globe, Loader2, CheckCircle2, Palette, Mail, Phone, MapPin, Lock } from 'lucide-react';
+import { ArrowRight, Sparkles, Zap, Search, Globe, Loader2, CheckCircle2, Palette, Mail, Phone, MapPin, Lock, Info, ExternalLink, Instagram, Facebook, Linkedin, Youtube, AlertTriangle, Cpu } from 'lucide-react';
 import { translations, Language } from '../translations';
 import { analyzeBrandIdentity } from '../services/geminiService';
 
@@ -10,12 +10,38 @@ interface OnboardingProps {
   lang: Language;
 }
 
+interface ScanResult {
+  status: "success" | "partial" | "failed";
+  confidence: number;
+  method: "meta" | "favicon" | "headless";
+  brand: {
+    name: string;
+    description: string;
+    logoUrl: string;
+    website: string;
+    industry: string;
+    keywords: string[];
+    primaryColor: string;
+    socials: {
+      instagram?: string;
+      facebook?: string;
+      linkedin?: string;
+      youtube?: string;
+    };
+  };
+  debug: {
+    sources: string[];
+    errors: string[];
+  };
+}
+
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
   const t = translations[lang];
   const [step, setStep] = useState(0); 
   const [isScanning, setIsScanning] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   
   const [profile, setProfile] = useState<BrandProfile>({
     name: '',
@@ -33,26 +59,39 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
     styleReferenceUrls: []
   });
 
-  const handleStartScan = async () => {
-    if (!profile.name) return;
+  const handleStartScan = async (deep: boolean = false) => {
+    if (!profile.name && !profile.website) return;
     setIsScanning(true);
-    console.info("[SociAI Diagnostic] Initiating Holonet Scan via Gemini Search...");
+    setScanResult(null);
+    console.info(`[SociAI Diagnostic] Initiating ${deep ? 'DEEP' : 'STANDARD'} Holonet Scan...`);
     
     try {
-        const detectedIdentity = await analyzeBrandIdentity(profile.name, profile.website);
-        console.info("[SociAI Diagnostic] Data Received. Success.");
-        setProfile(prev => ({
+        const result = await analyzeBrandIdentity(profile.name || 'Brand', profile.website, deep);
+        console.info("[SociAI Diagnostic] Scan Result:", result);
+        setScanResult(result);
+        
+        // Auto-fill logic
+        if (result.status !== 'failed' && result.brand) {
+          setProfile(prev => ({
             ...prev,
-            ...detectedIdentity,
-            tone: (detectedIdentity.tone as any) || prev.tone,
-            primaryColor: detectedIdentity.primaryColor || prev.primaryColor,
-            targetAudience: detectedIdentity.targetAudience || prev.targetAudience,
-            autoAppendSignature: detectedIdentity.autoAppendSignature ?? prev.autoAppendSignature,
-        }));
-        setStep(3); // Go to identity verification screen
+            name: result.brand.name || prev.name,
+            website: result.brand.website || prev.website,
+            industry: result.brand.industry || prev.industry,
+            primaryColor: result.brand.primaryColor || prev.primaryColor,
+            logoUrl: result.brand.logoUrl || prev.logoUrl,
+            businessDescription: result.brand.description || prev.businessDescription,
+            targetAudience: result.brand.industry ? `People interested in ${result.brand.industry}` : prev.targetAudience
+          }));
+        }
     } catch (e) {
         console.error("[SociAI Diagnostic] Scan error:", e);
-        setStep(2); // Fallback to manual details
+        setScanResult({
+          status: "failed",
+          confidence: 0,
+          method: "meta",
+          brand: { name: profile.name, description: '', logoUrl: '', website: profile.website || '', industry: '', keywords: [], primaryColor: '#8C4DFF', socials: {} },
+          debug: { sources: [], errors: [String(e)] }
+        });
     } finally {
         setIsScanning(false);
     }
@@ -69,6 +108,20 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
       return;
     }
     setStep(1);
+  };
+
+  const renderConfidence = (score: number) => {
+    const color = score > 75 ? 'text-green-400' : score > 40 ? 'text-cyber-turquoise' : 'text-amber-400';
+    return (
+      <div className="flex items-center gap-2">
+        <div className="h-1 w-12 bg-white/10 rounded-full overflow-hidden">
+          <div className={`h-full bg-current ${color}`} style={{ width: `${score}%` }} />
+        </div>
+        <span className={`text-[9px] font-black uppercase tracking-widest ${color}`}>
+          Scan Quality: {score}%
+        </span>
+      </div>
+    );
   };
 
   return (
@@ -172,16 +225,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">{t.industry}</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Creative Agency"
-                      className="w-full bg-cyber-dark/50 border border-cyber-purple/30 rounded-xl px-4 py-3 focus:outline-none focus:border-cyber-turquoise transition-all text-sm"
-                      value={profile.industry}
-                      onChange={e => setProfile({...profile, industry: e.target.value})}
-                    />
-                  </div>
-                  <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">{t.websiteUrl}</label>
                     <div className="relative">
                         <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
@@ -195,12 +238,70 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
                     </div>
                   </div>
                 </div>
+
+                {scanResult && (
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4 animate-fadeIn">
+                    <div className="flex justify-between items-start">
+                      <h4 className="text-[10px] font-black text-cyber-turquoise uppercase tracking-widest">Detected data from your website</h4>
+                      {renderConfidence(scanResult.confidence)}
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="w-16 h-16 bg-black/40 rounded-xl border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                        {scanResult.brand.logoUrl ? (
+                          <img src={scanResult.brand.logoUrl} className="w-full h-full object-contain p-2" alt="Logo" />
+                        ) : (
+                          <Globe size={24} className="text-gray-700" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                           <h5 className="text-white font-bold truncate">{scanResult.brand.name || profile.name}</h5>
+                           {scanResult.brand.website && <ExternalLink size={10} className="text-gray-500" />}
+                        </div>
+                        <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed">
+                          {scanResult.brand.description || "No description found."}
+                        </p>
+                        <div className="flex gap-3 pt-1">
+                          {scanResult.brand.socials.instagram && <Instagram size={12} className="text-pink-500" />}
+                          {scanResult.brand.socials.facebook && <Facebook size={12} className="text-blue-500" />}
+                          {scanResult.brand.socials.linkedin && <Linkedin size={12} className="text-blue-700" />}
+                        </div>
+                      </div>
+                    </div>
+
+                    {scanResult.confidence < 40 && (
+                      <div className="flex items-center gap-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                        <AlertTriangle size={14} className="text-amber-500" />
+                        <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest">
+                          This website uses dynamic content. Try a deep scan.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => setStep(3)}
+                        className="flex-1 py-3 bg-white/5 border border-white/10 hover:border-cyber-turquoise/50 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition"
+                      >
+                        Auto-fill data
+                      </button>
+                      <button 
+                        onClick={() => handleStartScan(true)}
+                        className="px-4 py-3 bg-cyber-purple/10 border border-cyber-purple/30 text-cyber-purple rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-cyber-purple hover:text-white transition flex items-center gap-2"
+                      >
+                        <Cpu size={12} /> Force Deep Scan
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <button 
-                  onClick={handleStartScan} 
-                  disabled={!profile.name}
+                  onClick={() => handleStartScan(false)} 
+                  disabled={!profile.name && !profile.website}
                   className="w-full bg-cyber-purple py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyber-magenta transition disabled:opacity-50 shadow-lg shadow-cyber-purple/20 uppercase tracking-widest"
                 >
-                  {t.nextStep} <Search size={20} />
+                  {scanResult ? t.nextStep : "SCAN WEBSITE"} <ArrowRight size={20} />
                 </button>
               </>
             )}
@@ -251,6 +352,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
                         ))}
                     </div>
                 </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Business Description</label>
+              <textarea 
+                className="w-full bg-cyber-dark/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyber-turquoise h-24 text-sm text-gray-300"
+                value={profile.businessDescription || ''}
+                onChange={e => setProfile({...profile, businessDescription: e.target.value})}
+                placeholder="Briefly describe your business..."
+              />
             </div>
 
             <div>

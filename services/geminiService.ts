@@ -118,18 +118,97 @@ export const generateAIVideo = async (prompt: string, profile: BrandProfile, edi
   };
 };
 
-// Reszta metod pomocniczych...
-export const analyzeBrandIdentity = async (name: string, website?: string): Promise<Partial<BrandProfile>> => {
+export const analyzeBrandIdentity = async (name: string, website?: string, deepScan: boolean = false): Promise<any> => {
   const ai = getAI();
-  const searchPrompt = `Analyze brand "${name}" ${website ? `at ${website}` : ''}. Return JSON with colors, tone, desc.`;
+  
+  const strategyPrompt = `Perform a ${deepScan ? 'DEEP' : 'STANDARD'} website scan and brand analysis for "${name}" at ${website || 'web'}.
+  Follow this 3-step strategy:
+  1. METADATA SCAN: Extract OG tags, Meta description, JSON-LD Organization data.
+  2. LOGO FALLBACK: Locate high-res logos, favicons, or touch icons.
+  3. DEEP SCAN (if requested): Analyze homepage structure, hero sections, and visual hierarchy.
+
+  Return a JSON object exactly matching this structure:
+  {
+    "status": "success" | "partial" | "failed",
+    "confidence": number (0-100),
+    "method": "meta" | "favicon" | "headless",
+    "brand": {
+      "name": string,
+      "description": string,
+      "logoUrl": string,
+      "website": string,
+      "industry": string,
+      "keywords": string[],
+      "primaryColor": string (hex),
+      "socials": {
+        "instagram": string,
+        "facebook": string,
+        "linkedin": string,
+        "youtube": string
+      }
+    },
+    "debug": {
+      "sources": string[],
+      "errors": string[]
+    }
+  }`;
+
   try {
     const res = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: searchPrompt,
-      config: { tools: [{ googleSearch: {} }], responseMimeType: "application/json" }
+      contents: strategyPrompt,
+      config: { 
+        tools: [{ googleSearch: {} }], 
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            status: { type: Type.STRING },
+            confidence: { type: Type.NUMBER },
+            method: { type: Type.STRING },
+            brand: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                description: { type: Type.STRING },
+                logoUrl: { type: Type.STRING },
+                website: { type: Type.STRING },
+                industry: { type: Type.STRING },
+                keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+                primaryColor: { type: Type.STRING },
+                socials: {
+                  type: Type.OBJECT,
+                  properties: {
+                    instagram: { type: Type.STRING },
+                    facebook: { type: Type.STRING },
+                    linkedin: { type: Type.STRING },
+                    youtube: { type: Type.STRING }
+                  }
+                }
+              }
+            },
+            debug: {
+              type: Type.OBJECT,
+              properties: {
+                sources: { type: Type.ARRAY, items: { type: Type.STRING } },
+                errors: { type: Type.ARRAY, items: { type: Type.STRING } }
+              }
+            }
+          },
+          required: ["status", "confidence", "brand"]
+        }
+      }
     });
     return JSON.parse(res.text || "{}");
-  } catch { return { primaryColor: '#8C4DFF', tone: 'professional' }; }
+  } catch (error) {
+    console.error("Brand analysis failed:", error);
+    return { 
+      status: "failed", 
+      confidence: 0, 
+      brand: { primaryColor: '#8C4DFF', name }, 
+      debug: { errors: [String(error)], sources: [] } 
+    };
+  }
 };
 
 export const generateWeeklyStrategy = async (profile: BrandProfile, lang: Language, formats: ContentFormat[]): Promise<SocialPost[]> => {
