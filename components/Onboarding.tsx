@@ -75,7 +75,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
           status: "failed",
           confidence: 0,
           method: "meta",
-          brand: { name: profile.name, description: '', logoUrl: '', website: profile.website || '', industry: '', keywords: [], primaryColor: '#8C4DFF', socials: {} },
+          brand: { 
+            name: profile.name, 
+            description: '', 
+            logoUrl: '', 
+            website: profile.website || '', 
+            industry: '', 
+            keywords: [], 
+            primaryColor: '#8C4DFF', 
+            socials: { instagram: "", facebook: "", linkedin: "", youtube: "" } 
+          },
           debug: { sources: [], errors: [String(e)] }
         });
     } finally {
@@ -88,13 +97,13 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
     
     setProfile(prev => ({
       ...prev,
-      name: scanResult.brand.name || prev.name,
-      website: scanResult.brand.website || prev.website,
-      industry: scanResult.brand.industry || prev.industry,
-      primaryColor: scanResult.brand.primaryColor || prev.primaryColor,
-      logoUrl: scanResult.brand.logoUrl || prev.logoUrl,
-      businessDescription: scanResult.brand.description || prev.businessDescription,
-      targetAudience: scanResult.brand.industry ? `People interested in ${scanResult.brand.industry}` : prev.targetAudience
+      name: scanResult.brand?.name || prev.name,
+      website: scanResult.brand?.website || prev.website,
+      industry: scanResult.brand?.industry || prev.industry,
+      primaryColor: scanResult.brand?.primaryColor || prev.primaryColor,
+      logoUrl: scanResult.brand?.logoUrl || prev.logoUrl,
+      businessDescription: scanResult.brand?.description || prev.businessDescription,
+      targetAudience: scanResult.brand?.industry ? `People interested in ${scanResult.brand.industry}` : prev.targetAudience
     }));
 
     setStep(3); // Move to verification step
@@ -251,7 +260,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
 
                     <div className="flex gap-4">
                       <div className="w-16 h-16 bg-black/40 rounded-xl border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-                        {scanResult.brand.logoUrl ? (
+                        {scanResult.brand?.logoUrl ? (
                           <img src={scanResult.brand.logoUrl} className="w-full h-full object-contain p-2" alt="Logo" />
                         ) : (
                           <Globe size={24} className="text-gray-700" />
@@ -259,26 +268,26 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, lang }) => {
                       </div>
                       <div className="flex-1 space-y-1 min-w-0">
                         <div className="flex items-center gap-2">
-                           <h5 className="text-white font-bold truncate">{scanResult.brand.name || profile.name}</h5>
-                           {scanResult.brand.website && <ExternalLink size={10} className="text-gray-500" />}
+                           <h5 className="text-white font-bold truncate">{scanResult.brand?.name || profile.name}</h5>
+                           {scanResult.brand?.website && <ExternalLink size={10} className="text-gray-500" />}
                         </div>
                         <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed">
-                          {scanResult.brand.description || "No description found."}
+                          {scanResult.brand?.description || "No description found."}
                         </p>
                         <div className="flex gap-3 pt-1">
-                          {scanResult.brand.socials.instagram && <Instagram size={12} className="text-pink-500" />}
-                          {scanResult.brand.socials.facebook && <Facebook size={12} className="text-blue-500" />}
-                          {scanResult.brand.socials.linkedin && <Linkedin size={12} className="text-blue-700" />}
-                          {scanResult.brand.socials.youtube && <Youtube size={12} className="text-red-500" />}
+                          {scanResult.brand?.socials?.instagram && <Instagram size={12} className="text-pink-500" />}
+                          {scanResult.brand?.socials?.facebook && <Facebook size={12} className="text-blue-500" />}
+                          {scanResult.brand?.socials?.linkedin && <Linkedin size={12} className="text-blue-700" />}
+                          {scanResult.brand?.socials?.youtube && <Youtube size={12} className="text-red-500" />}
                         </div>
                       </div>
                     </div>
 
-                    {scanResult.confidence < 40 && (
+                    {(scanResult.confidence < 40 || !scanResult.brand?.logoUrl) && (
                       <div className="flex items-center gap-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
                         <AlertTriangle size={14} className="text-amber-500" />
-                        <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest">
-                          This website uses dynamic content. Try a deep scan.
+                        <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest leading-tight">
+                          Partial data retrieved. Try a Deep Scan or edit below.
                         </p>
                       </div>
                     )}

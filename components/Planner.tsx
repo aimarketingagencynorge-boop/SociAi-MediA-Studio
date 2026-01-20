@@ -65,7 +65,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
         const nextSeed = (post.variantCount || 0) + 1;
         const result = await generateAIImage(post.content, profile, post.platform, post.aiMode || 'PHOTO', nextSeed);
         // Explicit type for prev to resolve unknown map error
-        onUpdatePosts((prev: SocialPost[]) => prev.map(p => p.id === post.id ? {
+        onUpdatePosts((prev: SocialPost[]) => (prev as SocialPost[]).map(p => p.id === post.id ? {
             ...p,
             imageUrl: result.url,
             imageHistory: [...new Set([...(p.imageHistory || []), result.url])],
@@ -82,7 +82,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
 
   const handleSwitchVariant = (postId: string, direction: 'prev' | 'next') => {
     // Explicit type for prev to resolve unknown map error
-    onUpdatePosts((prev: SocialPost[]) => prev.map(p => {
+    onUpdatePosts((prev: SocialPost[]) => (prev as SocialPost[]).map(p => {
         if (p.id === postId && p.imageHistory && p.imageHistory.length > 1) {
             const currentIndex = p.imageHistory.indexOf(p.imageUrl || '');
             let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
@@ -115,7 +115,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
   const handleSuccessUpdate = (url: string, brief?: any, aiPrompt?: string, mode?: ImageGenMode, aiDebug?: any) => {
     if (!genModal) return;
     // Fix: Explicitly typing 'prev' as SocialPost[] to resolve the "Property 'map' does not exist on type 'unknown'" error.
-    onUpdatePosts((prev: SocialPost[]) => prev.map(p => p.id === genModal.postId ? {
+    onUpdatePosts((prev: SocialPost[]) => (prev as SocialPost[]).map(p => p.id === genModal.postId ? {
       ...p,
       imageUrl: genModal.type === 'image' ? url : p.imageUrl,
       videoUrl: genModal.type === 'video' ? url : p.videoUrl,
@@ -175,7 +175,8 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
         </aside>
 
         <div className="xl:col-span-3 space-y-12 order-1 xl:order-2">
-           {Object.entries(groupedPosts).map(([date, dayPosts]) => (
+           {/* Fix: Explicitly casting Object.entries result to resolve "Property 'map' does not exist on type 'unknown'" error */}
+           {(Object.entries(groupedPosts) as [string, SocialPost[]][]).map(([date, dayPosts]) => (
              <div key={date} className="relative pl-6 md:pl-10 border-l border-white/5 space-y-6">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-cyber-dark border-2 border-cyber-purple shadow-[0_0_10px_#8C4DFF]" />
                 <h3 className="text-xl md:text-3xl font-futuristic font-bold text-white uppercase tracking-tighter leading-none">{date}</h3>
@@ -188,7 +189,8 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                     <div className="p-2 bg-white/5 rounded-xl border border-white/10">{platformIcons[post.platform as keyof typeof platformIcons]}</div>
                                     <span className="text-[10px] uppercase font-black tracking-[0.2em] text-gray-500">{post.platform}</span>
                                 </div>
-                                <button onClick={() => onUpdatePosts((prev: SocialPost[]) => prev.map(p => p.id === post.id ? {...p, status: 'approved'} : p))} className="text-[10px] font-black text-cyber-turquoise uppercase bg-cyber-turquoise/5 px-3 py-1.5 rounded-lg border border-cyber-turquoise/30">
+                                {/* Fix: Added explicit casting to ensure p is recognized as SocialPost in complex JSX contexts */}
+                                <button onClick={() => onUpdatePosts((prev: SocialPost[]) => (prev as SocialPost[]).map(p => p.id === post.id ? {...p, status: 'approved'} : p))} className="text-[10px] font-black text-cyber-turquoise uppercase bg-cyber-turquoise/5 px-3 py-1.5 rounded-lg border border-cyber-turquoise/30">
                                     <Sparkles size={14} /> {t.approve}
                                 </button>
                             </div>
@@ -214,7 +216,7 @@ export const Planner: React.FC<PlannerProps> = ({ posts, profile, lang, onUpdate
                                     <div className="flex items-center justify-between pt-4 border-t border-white/5">
                                         <div className="flex items-center gap-3">
                                             <button onClick={() => setGenModal({type: post.videoUrl ? 'video' : 'image', prompt: post.content, postId: post.id, initialUrl: post.imageUrl || post.videoUrl})} className="p-1 text-gray-500 hover:text-white"><Edit2 size={20} /></button>
-                                            <button onClick={() => onUpdatePosts((prev: SocialPost[]) => prev.filter(p => p.id !== post.id))} className="p-1 text-gray-500 hover:text-red-400"><Trash2 size={20} /></button>
+                                            <button onClick={() => onUpdatePosts((prev: SocialPost[]) => (prev as SocialPost[]).filter(p => p.id !== post.id))} className="p-1 text-gray-500 hover:text-red-400"><Trash2 size={20} /></button>
                                         </div>
                                         <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black text-gray-400 uppercase tracking-widest">Format: {post.format || 'STANDARD'}</div>
                                     </div>

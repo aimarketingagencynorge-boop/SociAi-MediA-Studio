@@ -119,22 +119,25 @@ export const generateAIVideo = async (prompt: string, profile: BrandProfile, edi
 export const analyzeBrandIdentity = async (name: string, website?: string, deepScan: boolean = false): Promise<any> => {
   const ai = getAI();
   
-  const strategyPrompt = `You are a world-class Brand Data Extractor. 
-  TASK: Perform a ${deepScan ? 'DEEP SCAN (high accuracy)' : 'STANDARD SCAN (fast)'} for the brand "${name}" using the provided website URL: ${website || 'web'}.
+  const strategyPrompt = `You are an expert Brand Intelligence agent. 
+  TASK: Extract comprehensive brand identity data for "${name}" using URL: ${website || 'N/A'}.
   
-  FALLBACK STRATEGY (MUST EXECUTE):
-  1. METADATA SCAN: Use Google Search to crawl the website's raw metadata. Look for Open Graph tags (og:site_name, og:title, og:description, og:image), meta description, and page <title>. Extract JSON-LD (application/ld+json) to find the official Organization name, logo, and social links (instagram, linkedin, etc).
-  2. LOGO FALLBACK: If og:image is not found, search for apple-touch-icon, favicons, or common logo paths like /logo.png.
-  3. DEEP SCAN (if deepScan is true): Analyze search results for hero section text, H1 headers, and mission statements. Use this to determine industry and keywords.
+  STEPS:
+  1. USE GOOGLE SEARCH to find the official website if URL is missing or unreachable.
+  2. IDENTIFY: Official business name, industry niche, and a rich description (2-3 sentences).
+  3. EXTRACT LOGO: Find the actual URL for the brand logo. Look for "og:image", "favicon", or official site assets.
+  4. SOCIALS: Locate official Instagram, Facebook, and LinkedIn links.
+  5. STYLE: Identify the primary brand color (HEX code).
 
-  MANDATORY: Return a REAL logo URL, a detailed description, and a confidence score (0-100).
-  If data is low quality, set status to "partial" but ALWAYS fill the fields as much as possible.
+  MANDATORY: Return a valid JSON object. If a field is unknown, leave it as an empty string, NEVER return null.
+  
+  Confidence Score: Calculate 0-100 based on how much real data you found.
 
-  Return a JSON object matching this structure:
+  JSON structure required:
   {
-    "status": "success" | "partial" | "failed",
+    "status": "success" | "partial",
     "confidence": number,
-    "method": "meta" | "favicon" | "headless",
+    "method": "search",
     "brand": {
       "name": string,
       "description": string,
@@ -158,7 +161,7 @@ export const analyzeBrandIdentity = async (name: string, website?: string, deepS
 
   try {
     const res = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: "gemini-3-flash-preview",
       contents: strategyPrompt,
       config: { 
         tools: [{ googleSearch: {} }], 
@@ -202,13 +205,44 @@ export const analyzeBrandIdentity = async (name: string, website?: string, deepS
         }
       }
     });
-    return JSON.parse(res.text || "{}");
+
+    const parsed = JSON.parse(res.text || "{}");
+    
+    // Safety Fallback Merger to prevent React "Black Screen" crash
+    return {
+      status: parsed.status || "partial",
+      confidence: parsed.confidence || 0,
+      method: parsed.method || "search",
+      brand: {
+        name: parsed.brand?.name || name,
+        description: parsed.brand?.description || "",
+        logoUrl: parsed.brand?.logoUrl || "",
+        website: parsed.brand?.website || website || "",
+        industry: parsed.brand?.industry || "",
+        keywords: parsed.brand?.keywords || [],
+        primaryColor: parsed.brand?.primaryColor || "#8C4DFF",
+        socials: {
+          instagram: parsed.brand?.socials?.instagram || "",
+          facebook: parsed.brand?.socials?.facebook || "",
+          linkedin: parsed.brand?.socials?.linkedin || "",
+          youtube: parsed.brand?.socials?.youtube || ""
+        }
+      },
+      debug: {
+        sources: parsed.debug?.sources || [],
+        errors: parsed.debug?.errors || []
+      }
+    };
   } catch (error) {
-    console.error("Brand analysis failed:", error);
+    console.error("[JedAi DB] Brand analysis critical failure:", error);
     return { 
       status: "failed", 
       confidence: 0, 
-      brand: { primaryColor: '#8C4DFF', name }, 
+      brand: { 
+        name, 
+        primaryColor: '#8C4DFF', 
+        socials: { instagram: "", facebook: "", linkedin: "", youtube: "" } 
+      }, 
       debug: { errors: [String(error)], sources: [] } 
     };
   }
